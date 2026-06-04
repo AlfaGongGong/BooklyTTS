@@ -1,0 +1,21 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; }
+.container { max-width: 700px; margin: 0 auto; padding: 20px; }
+header { text-align: center; padding: 30px 20px 20px; }
+header h1 { font-size: 2.2em; color: #7b68ee; }
+.subtitle { color: #aaa; margin-top: 8px; }
+.lang-info { font-size: 0.85em; color: #4ecdc4; margin-top: 8px; padding: 8px; background: rgba(78,205,196,0.1); border-radius: 8px; }
+.card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; margin: 16px 0; }
+.card h2 { color: #7b68ee; margin-bottom: 16px; }
+.btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; }
+.btn-primary { background: #7b68ee; color: white; }
+.btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
+.btn-large { width: 100%; padding: 16px; font-size: 1.1em; margin-top: 12px; }
+input[type="file"], select { margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; width: 100%; }
+.status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+.status-dot.ready { background: #38ef7d; }
+ul { list-style: none; }
+li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+li.empty { color: #666; font-style: italic; }
+footer { text-align: center; padding: 40px 20px; color: #666; font-size: 0.85em; }
+footer a { color: #7b68ee; }

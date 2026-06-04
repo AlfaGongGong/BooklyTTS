@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BooklyTTS - EPUB u Audiobook</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 BooklyTTS</h1>
+            <p class="subtitle">EPUB → Audiobook sa Microsoft Neural glasovima</p>
+            <p class="lang-info">🎯 HR/BS/SR glasovi: Gabrijela, Srecko, Goran, Vesna</p>
+        </header>
+        <main>
+            <section class="card status-section">
+                <h2>📊 Status</h2>
+                <div id="status-indicator">
+                    <span class="status-dot ready"></span>
+                    <span id="status-text">Spreman - Microsoft Edge TTS</span>
+                </div>
+            </section>
+            <section class="card">
+                <h2>🎤 Odaberi glas</h2>
+                <select id="voice-select">
+                    <optgroup label="Hrvatski">
+                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (zenski)</option>
+                        <option value="hr-HR-SreckoNeural">Srecko (muski)</option>
+                    </optgroup>
+                    <optgroup label="Bosanski">
+                        <option value="bs-BA-VesnaNeural">Vesna (zenski)</option>
+                        <option value="bs-BA-GoranNeural">Goran (muski)</option>
+                    </optgroup>
+                    <optgroup label="Srpski">
+                        <option value="sr-RS-SophieNeural">Sophie (zenski)</option>
+                        <option value="sr-RS-NicholasNeural">Nicholas (muski)</option>
+                    </optgroup>
+                    <optgroup label="Ceski">
+                        <option value="cs-CZ-VlastaNeural">Vlasta (zenski)</option>
+                        <option value="cs-CZ-AntoninNeural">Antonin (muski)</option>
+                    </optgroup>
+                </select>
+            </section>
+            <section class="card">
+                <h2>📖 EPUB fajl</h2>
+                <form id="epub-form" enctype="multipart/form-data">
+                    <input type="file" name="epub_file" accept=".epub" id="epub-file">
+                    <button type="submit" class="btn btn-primary">Upload EPUB</button>
+                </form>
+                <div id="epub-info" style="display:none;">
+                    <p><strong>Naslov:</strong> <span id="epub-title"></span></p>
+                    <p><strong>Autor:</strong> <span id="epub-author"></span></p>
+                    <p><strong>Poglavlja:</strong> <span id="epub-chapters"></span></p>
+                </div>
+            </section>
+            <section class="card">
+                <h2>▶️ Konverzija</h2>
+                <button id="start-conversion" class="btn btn-success btn-large">🎧 Pokreni konverziju</button>
+                <div id="progress" style="display:none;">
+                    <p id="progress-text">⏳ Konverzija u toku...</p>
+                </div>
+            </section>
+            <section class="card">
+                <h2>📁 Audiobookovi</h2>
+                <ul id="output-list"><li class="empty">Uploaduj EPUB za konverziju</li></ul>
+            </section>
+        </main>
+        <footer>
+            <p>BooklyTTS · Microsoft Edge Neural TTS · HR/BS/SR · <a href="https://github.com">GitHub</a></p>
+        </footer>
+    </div>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
