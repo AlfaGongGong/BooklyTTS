@@ -1,34 +1,17 @@
 let allChapters = [], currentChapterIdx = 0, epubFilename = null;
-let ttsJobId, activeAudio = null, ttsStopFlag = false, ttsRate = 1.0, ttsPaused = false;
-let currentEngine = 'edge';
-
-// ========== INICIJALIZACIJA ==========
-async function init() {
-    // Probaj učitati postojeći EPUB
-    try {
-        const r = await fetch('/get-chapters');
-        const d = await r.json();
-        if (d.chapters && d.chapters.length > 0) {
-            allChapters = d.chapters;
-            epubFilename = 'book.epub';
-            document.getElementById('book-title-header').textContent = 'Učitana knjiga';
-            renderChapterList();
-            loadChapter(0);
-            document.querySelector('.welcome-screen').style.display = 'none';
-        }
-    } catch(e) {
-        console.log('Nema postojećeg EPUB-a');
-    }
-}
+let ttsJobId = null, ttsStopFlag = false, ttsRate = 1.0, ttsPaused = false;
+let activeAudio = null;
 
 // ========== UPLOAD ==========
-document.getElementById('epub-file').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
+document.getElementById('epub-file').addEventListener('change', async function() {
+    const file = this.files[0];
     if (!file) return;
     
-    document.querySelector('.welcome-screen').innerHTML = '<p style="color:#aaa;">⏳ Upload...</p>';
+    document.getElementById('upload-status').textContent = '⏳ Upload...';
     
-    const fd = new FormData(); fd.append('epub_file', file);
+    const fd = new FormData();
+    fd.append('epub_file', file);
+    
     try {
         const r = await fetch('/upload-epub', { method: 'POST', body: fd });
         const d = await r.json();
@@ -37,30 +20,30 @@ document.getElementById('epub-file').addEventListener('change', async (e) => {
             epubFilename = d.filename;
             allChapters = d.chapters;
             document.getElementById('book-title-header').textContent = d.metadata.title;
+            document.getElementById('upload-status').textContent = '✅ ' + d.chapter_count + ' poglavlja';
             document.querySelector('.welcome-screen').style.display = 'none';
             renderChapterList();
             loadChapter(0);
+            saveState();
         } else {
-            alert('Greška: ' + d.error);
+            document.getElementById('upload-status').textContent = '❌ ' + (d.error || 'Greška');
         }
-    } catch(err) {
-        alert('Greška pri uploadu: ' + err.message);
+    } catch(e) {
+        document.getElementById('upload-status').textContent = '❌ Greška';
     }
 });
 
 // ========== POGLAVLJA ==========
 function renderChapterList() {
     const list = document.getElementById('chapter-list');
-    if (!allChapters || allChapters.length === 0) {
+    if (!allChapters.length) {
         list.innerHTML = '<p class="empty">Nema poglavlja</p>';
         return;
     }
-    
     list.innerHTML = allChapters.map((c, i) => `
         <div class="chapter-link ${i === currentChapterIdx ? 'active' : ''}" 
-             onclick="loadChapter(${i})" id="ch-link-${i}">
-            ${i+1}. ${c.title || 'Poglavlje ' + (i+1)}
-            <span class="badge">${Math.round((c.char_count || 0)/1000)}k</span>
+             onclick="loadChapter(${i})" id="ch-${i}">
+            ${i+1}. ${c.title || 'Poglavlje '+(i+1)}
         </div>
     `).join('');
 }
@@ -72,78 +55,57 @@ function filterChapters() {
     });
 }
 
-async let chapterScrollPos = {};
 function loadChapter(idx) {
     currentChapterIdx = idx;
+    if (!allChapters[idx]) return;
     
-    if (!allChapters || !allChapters[idx]) {
-        document.getElementById('reader-content').innerHTML = '<p>Nema teksta za ovo poglavlje</p>';
-    if (chapterScrollPos[currentChapterIdx]) { setTimeout(() => { document.getElementById("reader-content").scrollTop = chapterScrollPos[currentChapterIdx]; }, 100); }
-        return;
-    }
-    
-    const chapter = allChapters[idx];
-    const text = chapter.text || '';
-    const paragraphs = text.split('\n\n').filter(p => p.trim());
-    
-    document.getElementById('reader-content').innerHTML = `
-    if (chapterScrollPos[currentChapterIdx]) { setTimeout(() => { document.getElementById("reader-content").scrollTop = chapterScrollPos[currentChapterIdx]; }, 100); }
-        <h2>${chapter.title || 'Poglavlje ' + (idx+1)}</h2>
-        ${paragraphs.length > 0 ? paragraphs.map(p => `<p>${p}</p>`).join('') : '<p>' + text + '</p>'}
-    `;
+    const ch = allChapters[idx];
+    document.getElementById('reader-content').innerHTML = 
+        `<h2>${ch.title || 'Poglavlje '+(idx+1)}</h2>` +
+        (ch.text || '').split('\n\n').filter(p=>p.trim()).map(p=>`<p>${p}</p>`).join('');
     
     document.getElementById('reading-progress').textContent = 
-        Math.round((idx + 1) / allChapters.length * 100) + '%';
+        Math.round((idx+1)/allChapters.length*100) + '%';
     
     // Update sidebar
     document.querySelectorAll('.chapter-link').forEach(el => el.classList.remove('active'));
-    const active = document.getElementById('ch-link-' + idx);
-    if (active) {
-        active.classList.add('active');
-        active.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    const active = document.getElementById('ch-'+idx);
+    if (active) { active.classList.add('active'); active.scrollIntoView({behavior:'smooth',block:'center'}); }
+    
+    saveState();
 }
 
-// ========== ČITAČ KONTROLE ==========
+// ========== TOOLBAR ==========
 function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('open');
 }
-
 function changeFontSize(size) {
     document.getElementById('reader-content').style.fontSize = size + 'px';
+    localStorage.setItem('fontSize', size);
 }
-
 function toggleTheme() {
     document.body.classList.toggle('light');
+    saveState();
 }
-
-// ========== TTS PANEL ==========
-function toggleTTS() {
-    const panel = document.getElementById('tts-panel');
-    if (panel.style.display === 'none' || panel.style.display === '') {
-        panel.style.display = 'block';
-    } else {
-        panel.style.display = 'none';
-    }
-}
-
-function updateTTSRate(val) {
+function updateRate(val) {
     ttsRate = parseFloat(val);
     document.getElementById('rate-display').textContent = val + 'x';
 }
 
+// ========== TTS PANEL ==========
+function toggleTTSPanel() {
+    const panel = document.getElementById('tts-panel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
 // ========== TTS PLAYBACK ==========
 async function ttsPlay() {
-    if (!allChapters || allChapters.length === 0) {
-        alert('Prvo uploaduj EPUB!');
-        return;
-    }
+    if (!allChapters.length) { alert('Uploaduj EPUB!'); return; }
     
-    ttsStopFlag = false;
-    ttsPaused = false;
-    
+    ttsStopFlag = false; ttsPaused = false;
     document.getElementById('tts-play-btn').style.display = 'none';
     document.getElementById('tts-pause-btn').style.display = 'inline-block';
+    document.getElementById('tts-pause-btn').textContent = '⏸️ Pauza';
     document.getElementById('tts-stop-btn').style.display = 'inline-block';
     document.getElementById('tts-status').textContent = '⏳ Generišem...';
     
@@ -151,26 +113,14 @@ async function ttsPlay() {
     
     try {
         const r = await fetch('/stream-start', {
-            method: 'POST', 
+            method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                chapter: currentChapterIdx, 
-                voice: voice
-            })
+            body: JSON.stringify({chapter: currentChapterIdx, voice: voice, epub_filename: epubFilename})
         });
         const d = await r.json();
-        
-        if (d.job_id) {
-            ttsJobId = d.job_id;
-            ttsPlayNextChunk();
-        } else if (d.error) {
-            document.getElementById('tts-status').textContent = '❌ ' + d.error;
-            resetTTSButtons();
-        }
-    } catch(e) {
-        document.getElementById('tts-status').textContent = '❌ Greška';
-        resetTTSButtons();
-    }
+        if (d.job_id) { ttsJobId = d.job_id; ttsPlayNextChunk(); }
+        else { document.getElementById('tts-status').textContent = '❌ ' + (d.error || 'Greška'); resetTTS(); }
+    } catch(e) { document.getElementById('tts-status').textContent = '❌ Greška'; resetTTS(); }
 }
 
 async function ttsPlayNextChunk() {
@@ -182,114 +132,92 @@ async function ttsPlayNextChunk() {
         
         if (ct.includes('audio')) {
             const blob = await r.blob();
-            const audio = new Audio(URL.createObjectURL(blob));
-            audio.playbackRate = ttsRate;
-            await audio.play();
+            if (activeAudio) { activeAudio.pause(); activeAudio = null; }
+            activeAudio = new Audio(URL.createObjectURL(blob));
+            activeAudio.playbackRate = ttsRate;
+            activeAudio.play();
             document.getElementById('tts-status').textContent = '▶️ Reprodukcija...';
-            audio.onended = () => { 
-                if (!ttsStopFlag && !ttsPaused) ttsPlayNextChunk(); 
-            };
+            activeAudio.onended = () => { if (!ttsStopFlag && !ttsPaused) ttsPlayNextChunk(); };
         } else {
             const d = await r.json();
             if (d.finished) {
                 document.getElementById('tts-status').textContent = '✅ Kraj poglavlja';
-                resetTTSButtons();
-                // Auto-next
+                resetTTS();
                 if (currentChapterIdx < allChapters.length - 1) {
-                    setTimeout(() => { 
-                        loadChapter(currentChapterIdx + 1); 
-                        ttsPlay(); 
-                    }, 1500);
+                    setTimeout(() => { loadChapter(currentChapterIdx + 1); ttsPlay(); }, 1000);
                 }
-            } else if (d.error) {
-                document.getElementById('tts-status').textContent = '❌ ' + d.error;
-                resetTTSButtons();
             }
         }
-    } catch(e) {
-        document.getElementById('tts-status').textContent = '❌ Greška';
-        resetTTSButtons();
+    } catch(e) { document.getElementById('tts-status').textContent = '❌ Greška'; resetTTS(); }
+}
+
+function ttsPause() {
+    if (!activeAudio) return;
+    if (ttsPaused) {
+        activeAudio.play();
+        ttsPaused = false;
+        document.getElementById('tts-pause-btn').textContent = '⏸️ Pauza';
+        document.getElementById('tts-status').textContent = '▶️ Reprodukcija...';
+        ttsPlayNextChunk();
+    } else {
+        activeAudio.pause();
+        ttsPaused = true;
+        document.getElementById('tts-pause-btn').textContent = '▶️ Nastavi';
+        document.getElementById('tts-status').textContent = '⏸️ Pauzirano';
     }
 }
 
-let activeAudio = null;
-function ttsPause() { if (activeAudio) { if (ttsPaused) { activeAudio.play(); ttsPaused = false; } else { activeAudio.pause(); ttsPaused = true; } } document.getElementById("tts-pause-btn").textContent = ttsPaused ? "▶️ Nastavi" : "⏸️ Pauza"; return; }
-function _old_ttsPause() {
-    ttsPaused = !ttsPaused;
-    document.getElementById('tts-pause-btn').textContent = ttsPaused ? '▶️ Nastavi' : '⏸️ Pauza';
-    document.getElementById('tts-status').textContent = ttsPaused ? '⏸️ Pauzirano' : '▶️ Reprodukcija...';
-    if (!ttsPaused) ttsPlayNextChunk();
-}
-
 function ttsStop() {
-    ttsStopFlag = true; 
-    ttsJobId = null;
-    resetTTSButtons();
+    ttsStopFlag = true; ttsJobId = null;
+    if (activeAudio) { activeAudio.pause(); activeAudio = null; }
+    resetTTS();
     document.getElementById('tts-status').textContent = '⏹️ Zaustavljeno';
 }
 
 function ttsNext() {
-    if (allChapters.length > 0 && currentChapterIdx < allChapters.length - 1) {
-        ttsStop();
-        loadChapter(currentChapterIdx + 1);
-        setTimeout(ttsPlay, 500);
+    if (currentChapterIdx < allChapters.length - 1) {
+        ttsStop(); loadChapter(currentChapterIdx + 1); setTimeout(ttsPlay, 300);
     }
 }
-
 function ttsPrev() {
     if (currentChapterIdx > 0) {
-        ttsStop();
-        loadChapter(currentChapterIdx - 1);
-        setTimeout(ttsPlay, 500);
+        ttsStop(); loadChapter(currentChapterIdx - 1); setTimeout(ttsPlay, 300);
     }
 }
 
-function resetTTSButtons() {
+function resetTTS() {
     document.getElementById('tts-play-btn').style.display = 'inline-block';
     document.getElementById('tts-pause-btn').style.display = 'none';
     document.getElementById('tts-stop-btn').style.display = 'none';
 }
 
-// Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    if (e.key === 'ArrowRight') ttsNext();
-    if (e.key === 'ArrowLeft') ttsPrev();
-    if (e.key === ' ') { e.preventDefault(); ttsPaused ? ttsPause() : ttsPlay(); }
-});
-
-// Init
-init();
-
-// ========== LOCAL STORAGE STATE ==========
-function saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;() {
-    const state = {
+// ========== LOCAL STORAGE ==========
+function saveState() {
+    const s = {
         chapter: currentChapterIdx,
         fontSize: document.getElementById('font-size').value,
         theme: document.body.classList.contains('light') ? 'light' : 'dark',
-        sidebarOpen: document.getElementById('sidebar').classList.contains('open'),
-        scrollPos: document.getElementById('reader-content').scrollTop
+        sidebarOpen: document.getElementById('sidebar').classList.contains('open')
     };
-    localStorage.setItem('booklytts_state', JSON.stringify(state));
+    localStorage.setItem('booklytts', JSON.stringify(s));
 }
+setInterval(saveState, 5000);
 
-function restoreState() {
+(function() {
     try {
-        const state = JSON.parse(localStorage.getItem('booklytts_state'));
-        if (state) {
-            if (state.fontSize) changeFontSize(state.fontSize);
-            if (state.theme === 'light') document.body.classList.add('light');
-            if (state.sidebarOpen) document.getElementById('sidebar').classList.add('open');
+        const s = JSON.parse(localStorage.getItem('booklytts'));
+        if (s && s.fontSize) {
+            document.getElementById('font-size').value = s.fontSize;
+            document.getElementById('reader-content').style.fontSize = s.fontSize + 'px';
         }
+        if (s && s.theme === 'light') document.body.classList.add('light');
     } catch(e) {}
-}
+})();
 
-// Auto-save svakih 5s
-setInterval(saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;, 5000);
-document.getElementById('reader-content').addEventListener('scroll', saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;);
-restoreState();
-function saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;(){const s={chapter:currentChapterIdx,fontSize:document.getElementById('font-size').value,theme:document.body.classList.contains('light')?'light':'dark',sidebarOpen:document.getElementById('sidebar').classList.contains('open')};localStorage.setItem('booklytts',JSON.stringify(s));}
-function restoreState(){try{const s=JSON.parse(localStorage.getItem('booklytts'));if(s){if(s.fontSize)changeFontSize(s.fontSize);if(s.theme==='light')document.body.classList.add('light');if(s.sidebarOpen)document.getElementById('sidebar').classList.add('open');if(s.chapter!==undefined)loadChapter(s.chapter);}}catch(e){}}
-setInterval(saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;,5000);restoreState();
-document.getElementById('font-size').addEventListener('change',function(){localStorage.setItem('fontSize',this.value);});
-(function(){const fs=localStorage.getItem('fontSize');if(fs){document.getElementById('font-size').value=fs;changeFontSize(fs);}})();
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'ArrowRight') ttsNext();
+    if (e.key === 'ArrowLeft') ttsPrev();
+    if (e.key === ' ') { e.preventDefault(); if (ttsJobId && !ttsStopFlag) ttsPause(); else ttsPlay(); }
+});

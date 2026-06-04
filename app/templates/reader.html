@@ -5,8 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BooklyTTS Reader</title>
     <link rel="stylesheet" href="/static/css/style.css?v=8">
-    <link rel="stylesheet" href="/static/css/style.css?v=8">
-    <link rel="stylesheet" href="/static/css/reader.css?v=3">
+    <link rel="stylesheet" href="/static/css/reader.css?v=4">
+    <style>
+        .upload-section { padding: 8px 16px; background: rgba(0,0,0,0.2); display: flex; gap: 8px; align-items: center; }
+        .upload-section input[type="file"] { flex: 1; padding: 6px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white; }
+        .upload-section .btn { white-space: nowrap; }
+        .tts-panel-overlay { position: fixed; bottom: 0; left: 0; right: 0; background: #1a1a2e; border-top: 2px solid #7b68ee; padding: 12px 16px; z-index: 100; box-shadow: 0 -4px 20px rgba(0,0,0,0.5); }
+        .tts-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .tts-panel-header span { font-weight: bold; color: #7b68ee; }
+        .tts-close-btn { background: none; border: none; color: #aaa; font-size: 1.2em; cursor: pointer; }
+        .tts-controls-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .tts-controls-row select { padding: 6px 10px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; font-size: 0.85em; }
+        .tts-actions-row { display: flex; gap: 8px; margin-top: 8px; }
+        .tts-actions-row .btn { font-size: 0.9em; }
+        .tts-status-text { font-size: 0.8em; color: #aaa; margin-top: 4px; }
+        .main-content { padding-bottom: 80px; }
+    </style>
 </head>
 <body>
     <div class="app">
@@ -15,13 +29,20 @@
             <div class="header-left">
                 <a href="/" class="logo">📚 BooklyTTS</a>
             </div>
-            <div class="header-center" id="book-title-header">Odaberi knjigu</div>
+            <div class="header-center" id="book-title-header">Reader</div>
             <div class="header-right">
-                <a href="/rules" class="icon-btn" title="Pravila izgovora">🔧</a>
-                <a href="/convert" class="icon-btn" title="Snimi MP3">💾</a>
-                <button class="icon-btn" onclick="toggleTTS()" title="TTS kontrola">🎧</button>
+                <a href="/rules" class="icon-btn" title="Pravila">🔧</a>
+                <a href="/convert" class="icon-btn" title="Konverter">💾</a>
+                <button class="icon-btn" onclick="toggleTTSPanel()" title="TTS">🎧</button>
             </div>
         </header>
+        
+        <!-- UPLOAD BAR -->
+        <div class="upload-section">
+            <input type="file" id="epub-file" accept=".epub">
+            <button class="btn btn-primary" onclick="document.getElementById('epub-file').click()">📤 Upload</button>
+            <span id="upload-status" style="font-size:0.8em;color:#aaa;"></span>
+        </div>
         
         <!-- GLAVNI SADRŽAJ -->
         <div class="main-content">
@@ -32,14 +53,14 @@
                     <input type="text" id="chapter-search" placeholder="🔍 Traži..." oninput="filterChapters()">
                 </div>
                 <div class="chapter-list" id="chapter-list">
-                    <p class="empty">Uploaduj EPUB</p>
+                    <p class="empty">Uploaduj EPUB za početak</p>
                 </div>
             </aside>
             
             <!-- READER -->
             <div class="reader-view">
                 <div class="reader-toolbar">
-                    <button onclick="toggleSidebar()" title="Poglavlja">📑</button>
+                    <button onclick="toggleSidebar()">📑</button>
                     <select id="font-size" onchange="changeFontSize(this.value)">
                         <option value="14">14px</option>
                         <option value="16" selected>16px</option>
@@ -47,42 +68,26 @@
                         <option value="20">20px</option>
                         <option value="24">24px</option>
                     </select>
-                    <button onclick="toggleTheme()" title="Tema">🌓</button>
-                    <span id="reading-progress">0%</span>
+                    <button onclick="toggleTheme()">🌓</button>
+                    <span id="reading-progress">-</span>
                 </div>
-                
                 <div class="reader-content" id="reader-content">
                     <div class="welcome-screen">
-                        <h2>📚 Dobrodošli u BooklyTTS Reader</h2>
-                        <p>Uploaduj EPUB fajl za početak čitanja</p>
-                        <input type="file" id="epub-file" accept=".epub" style="display:none;">
-                        <button class="btn btn-primary" onclick="document.getElementById('epub-file').click()">
-                            📤 Upload EPUB
-                        </button>
-                        <p style="margin-top:12px;font-size:0.85em;">
-                            <a href="/rules">🔧 Pravila izgovora</a> · 
-                            <a href="/convert">💾 Snimi MP3</a>
-                        </p>
+                        <h2>📚 BooklyTTS Reader</h2>
+                        <p>Uploaduj EPUB fajl iznad za početak čitanja</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- TTS PANEL -->
-        <div class="tts-panel" id="tts-panel">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span style="font-size:0.9em;">🎧 TTS Kontrola</span>
-                <button onclick="toggleTTS()" style="background:none;border:none;color:#aaa;cursor:pointer;">✕</button>
+        <!-- TTS PANEL (fiksiran na dnu) -->
+        <div class="tts-panel-overlay" id="tts-panel" style="display:none;">
+            <div class="tts-panel-header">
+                <span>🎧 TTS Kontrola</span>
+                <button class="tts-close-btn" onclick="toggleTTSPanel()">✕ Zatvori</button>
             </div>
-            <div class="tts-controls">
-                <!-- ENGINE SELECTOR -->
-                <select id="tts-engine" onchange="changeEngine(this.value)" style="padding:6px 10px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:0.85em;">
-                    <option value="edge">Microsoft Edge (besplatan, online)</option>
-                    <option value="google">Google TTS (besplatan, online)</option>
-                </select>
-                
-                <!-- VOICE SELECTOR -->
-                <select id="tts-voice" style="padding:6px 10px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:0.85em;">
+            <div class="tts-controls-row">
+                <select id="tts-voice">
                     <optgroup label="Hrvatski">
                         <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (ž)</option>
                         <option value="hr-HR-SreckoNeural">Srecko (m)</option>
@@ -91,37 +96,24 @@
                         <option value="bs-BA-VesnaNeural">Vesna (ž)</option>
                         <option value="bs-BA-GoranNeural">Goran (m)</option>
                     </optgroup>
-                    <optgroup label="Srpski">
-                        <option value="sr-RS-SophieNeural">Sophie (ž)</option>
-                        <option value="sr-RS-NicholasNeural">Nicholas (m)</option>
-                    </optgroup>
                 </select>
-                
-                <!-- BRZINA -->
-                <div class="rate-control">
-                    <span style="font-size:0.8em;">⚡ <span id="rate-display">1.0x</span></span>
-                    <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateTTSRate(this.value)" style="width:70px;">
-                </div>
-                
-                <!-- BG MODE -->
-                <label style="font-size:0.8em;display:flex;align-items:center;gap:4px;">
-                    <input type="checkbox" id="bg-mode"> 📱
-                </label>
+                <select id="tts-engine" style="padding:6px 10px;background:rgba(255,255,255,0.1);color:white;border:1px solid rgba(255,255,255,0.2);border-radius:6px;font-size:0.85em;">
+                    <option value="edge">Microsoft Edge</option>
+                </select>
+                <span style="font-size:0.8em;">⚡ <span id="rate-display">1.0x</span></span>
+                <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)" style="width:70px;">
             </div>
-            
-            <!-- DUGMAD -->
-            <div class="tts-actions">
+            <div class="tts-actions-row">
                 <button id="tts-play-btn" class="btn btn-success" onclick="ttsPlay()">▶️ Play</button>
                 <button id="tts-pause-btn" class="btn" onclick="ttsPause()" style="display:none;">⏸️ Pauza</button>
                 <button id="tts-stop-btn" class="btn btn-danger" onclick="ttsStop()" style="display:none;">⏹️ Stop</button>
                 <button class="btn" onclick="ttsPrev()">⏮️</button>
                 <button class="btn" onclick="ttsNext()">⏭️</button>
             </div>
-            
-            <div class="tts-status" id="tts-status">Spreman. Odaberi poglavlje i klikni Play.</div>
+            <div class="tts-status-text" id="tts-status">Spreman. Odaberi poglavlje i klikni Play.</div>
         </div>
     </div>
     
-    <script src="/static/js/reader.js?v=2"></script>
+    <script src="/static/js/reader.js?v=3"></script>
 </body>
 </html>
