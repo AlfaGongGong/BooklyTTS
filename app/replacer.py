@@ -72,7 +72,7 @@ class NameReplacer:
             if f.endswith('.json'):
                 name = f.replace('.json', '')
                 with open(f'{self.profiles_dir}/{f}',
-                         encoding='utf-8') as fh:
+                          encoding='utf-8') as fh:
                     rules = json.load(fh)
                 profiles.append({
                     'name': name,

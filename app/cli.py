@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+from app.audio_builder import AudioBuilder
+from app.epub_processor import EPUBProcessor
+from app.tts_engine import TTSEngine
 import os
 import sys
 import click
@@ -6,9 +9,6 @@ from rich.console import Console
 
 console = Console()
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from app.tts_engine import TTSEngine
-from app.epub_processor import EPUBProcessor
-from app.audio_builder import AudioBuilder
 
 engine = TTSEngine()
 epub_processor = EPUBProcessor()

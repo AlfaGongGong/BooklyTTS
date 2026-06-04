@@ -1,3 +1,4 @@
+from app.replacer import NameReplacer
 import os
 import uuid
 import json
@@ -133,7 +134,7 @@ def start_conversion():
 
             from app.database import save_conversion
             save_conversion(epub_filename, voice, len(chapters),
-                          output_filename)
+                            output_filename)
 
             jobs[job_id]['status'] = 'Zavrseno'
             jobs[job_id]['progress'] = 100
@@ -178,7 +179,7 @@ def list_audiobooks():
             'name': f,
             'size_mb': round(os.path.getsize(path) / (1024 * 1024), 1),
             'date': time.strftime('%d.%m.%Y %H:%M',
-                                 time.localtime(os.path.getmtime(path)))
+                                  time.localtime(os.path.getmtime(path)))
         })
     return jsonify(result[:20])
 
@@ -224,9 +225,6 @@ def convert_page():
 @main_bp.route('/rules')
 def rules_page():
     return render_template('rules.html')
-
-
-from app.replacer import NameReplacer
 
 
 @main_bp.route('/profiles')
