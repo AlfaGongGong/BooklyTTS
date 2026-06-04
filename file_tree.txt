@@ -1,0 +1,42 @@
+BooklyTTS/
+├── app/
+│   ├── static/
+│   │   ├── audio/
+│   │   │   └── chunks/
+│   │   │       └── .gitkeep
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   └── js/
+│   │       └── app.js
+│   ├── templates/
+│   │   └── index.html
+│   ├── __init__.py
+│   ├── audio_builder.py
+│   ├── cli.py
+│   ├── epub_processor.py
+│   ├── routes.py
+│   └── tts_engine.py
+├── library/
+│   └── .gitkeep
+├── output/
+│   └── .gitkeep
+├── reference_audio/
+├── scripts/
+├── tests/
+├── uploads/
+│   └── .gitkeep
+├── .env
+├── .gitignore
+├── bookly_tts_01_init.sh
+├── bookly_tts_03_app.sh
+├── LICENSE
+├── README.md
+├── run_cli.sh
+├── run_web.sh
+├── snapshot.py
+├── sync_bidirectional.py
+├── sync_control.sh
+├── test.mp3
+├── test.txt
+├── test_sync.txt
+└── zipuj.py
