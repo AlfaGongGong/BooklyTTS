@@ -209,6 +209,7 @@ async function ttsPlayNextChunk() {
     }
 }
 
+let activeAudio = null;
 function ttsPause() {
     ttsPaused = !ttsPaused;
     document.getElementById('tts-pause-btn').textContent = ttsPaused ? '▶️ Nastavi' : '⏸️ Pauza';
@@ -255,3 +256,31 @@ document.addEventListener('keydown', (e) => {
 
 // Init
 init();
+
+// ========== LOCAL STORAGE STATE ==========
+function saveState() {
+    const state = {
+        chapter: currentChapterIdx,
+        fontSize: document.getElementById('font-size').value,
+        theme: document.body.classList.contains('light') ? 'light' : 'dark',
+        sidebarOpen: document.getElementById('sidebar').classList.contains('open'),
+        scrollPos: document.getElementById('reader-content').scrollTop
+    };
+    localStorage.setItem('booklytts_state', JSON.stringify(state));
+}
+
+function restoreState() {
+    try {
+        const state = JSON.parse(localStorage.getItem('booklytts_state'));
+        if (state) {
+            if (state.fontSize) changeFontSize(state.fontSize);
+            if (state.theme === 'light') document.body.classList.add('light');
+            if (state.sidebarOpen) document.getElementById('sidebar').classList.add('open');
+        }
+    } catch(e) {}
+}
+
+// Auto-save svakih 5s
+setInterval(saveState, 5000);
+document.getElementById('reader-content').addEventListener('scroll', saveState);
+restoreState();
