@@ -102,6 +102,12 @@ def start_conversion():
             jobs[job_id]['status'] = 'Zavrseno'
             jobs[job_id]['progress'] = 100
             jobs[job_id]['result'] = output_filename
+            import threading, time
+def cleanup():
+    time.sleep(300)
+    jobs.pop(job_id, None)
+threading.Thread(target=cleanup, daemon=True).start()
+            from app.database import save_conversion; save_conversion(epub_filename, voice, len(chapters), output_filename)
             
             # O-05: Očisti job nakon 5 minuta
             def cleanup():
@@ -117,6 +123,7 @@ def start_conversion():
 
 @main_bp.route('/conversion-progress/<job_id>')
 def conversion_progress(job_id):
+    if job_id not in jobs: return jsonify({"error":"Job ne postoji"}), 404
     if job_id not in jobs: return jsonify({'error':'Job ne postoji'}), 404
     
     def generate():

@@ -1,5 +1,5 @@
 let allChapters = [], currentChapterIdx = 0, epubFilename = null;
-let ttsJobId = null, ttsStopFlag = false, ttsRate = 1.0, ttsPaused = false;
+let ttsJobId, activeAudio = null, ttsStopFlag = false, ttsRate = 1.0, ttsPaused = false;
 let currentEngine = 'edge';
 
 // ========== INICIJALIZACIJA ==========
@@ -72,11 +72,13 @@ function filterChapters() {
     });
 }
 
-async function loadChapter(idx) {
+async let chapterScrollPos = {};
+function loadChapter(idx) {
     currentChapterIdx = idx;
     
     if (!allChapters || !allChapters[idx]) {
         document.getElementById('reader-content').innerHTML = '<p>Nema teksta za ovo poglavlje</p>';
+    if (chapterScrollPos[currentChapterIdx]) { setTimeout(() => { document.getElementById("reader-content").scrollTop = chapterScrollPos[currentChapterIdx]; }, 100); }
         return;
     }
     
@@ -85,6 +87,7 @@ async function loadChapter(idx) {
     const paragraphs = text.split('\n\n').filter(p => p.trim());
     
     document.getElementById('reader-content').innerHTML = `
+    if (chapterScrollPos[currentChapterIdx]) { setTimeout(() => { document.getElementById("reader-content").scrollTop = chapterScrollPos[currentChapterIdx]; }, 100); }
         <h2>${chapter.title || 'Poglavlje ' + (idx+1)}</h2>
         ${paragraphs.length > 0 ? paragraphs.map(p => `<p>${p}</p>`).join('') : '<p>' + text + '</p>'}
     `;
@@ -210,7 +213,8 @@ async function ttsPlayNextChunk() {
 }
 
 let activeAudio = null;
-function ttsPause() {
+function ttsPause() { if (activeAudio) { if (ttsPaused) { activeAudio.play(); ttsPaused = false; } else { activeAudio.pause(); ttsPaused = true; } } document.getElementById("tts-pause-btn").textContent = ttsPaused ? "▶️ Nastavi" : "⏸️ Pauza"; return; }
+function _old_ttsPause() {
     ttsPaused = !ttsPaused;
     document.getElementById('tts-pause-btn').textContent = ttsPaused ? '▶️ Nastavi' : '⏸️ Pauza';
     document.getElementById('tts-status').textContent = ttsPaused ? '⏸️ Pauzirano' : '▶️ Reprodukcija...';
@@ -258,7 +262,7 @@ document.addEventListener('keydown', (e) => {
 init();
 
 // ========== LOCAL STORAGE STATE ==========
-function saveState() {
+function saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;() {
     const state = {
         chapter: currentChapterIdx,
         fontSize: document.getElementById('font-size').value,
@@ -281,6 +285,11 @@ function restoreState() {
 }
 
 // Auto-save svakih 5s
-setInterval(saveState, 5000);
-document.getElementById('reader-content').addEventListener('scroll', saveState);
+setInterval(saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;, 5000);
+document.getElementById('reader-content').addEventListener('scroll', saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;);
 restoreState();
+function saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;(){const s={chapter:currentChapterIdx,fontSize:document.getElementById('font-size').value,theme:document.body.classList.contains('light')?'light':'dark',sidebarOpen:document.getElementById('sidebar').classList.contains('open')};localStorage.setItem('booklytts',JSON.stringify(s));}
+function restoreState(){try{const s=JSON.parse(localStorage.getItem('booklytts'));if(s){if(s.fontSize)changeFontSize(s.fontSize);if(s.theme==='light')document.body.classList.add('light');if(s.sidebarOpen)document.getElementById('sidebar').classList.add('open');if(s.chapter!==undefined)loadChapter(s.chapter);}}catch(e){}}
+setInterval(saveState() { const rc = document.getElementById("reader-content"); if (rc) chapterScrollPos[currentChapterIdx] = rc.scrollTop;,5000);restoreState();
+document.getElementById('font-size').addEventListener('change',function(){localStorage.setItem('fontSize',this.value);});
+(function(){const fs=localStorage.getItem('fontSize');if(fs){document.getElementById('font-size').value=fs;changeFontSize(fs);}})();

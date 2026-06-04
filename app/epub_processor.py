@@ -71,3 +71,7 @@ class EPUBProcessor:
             logging.error(f"EPUB read error: {e}")
         
         return chapters
+import functools
+@functools.lru_cache(maxsize=5)
+def _cached_extract(epub_path, mtime):
+    return EPUBProcessor._extract_chapters(epub_path)

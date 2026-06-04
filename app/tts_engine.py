@@ -1,4 +1,5 @@
-import os, asyncio, tempfile, re
+import os, asyncio, tempfile, re, subprocess
+from app.replacer import NameReplacer
 
 class TTSEngine:
     VOICES = {
@@ -8,55 +9,51 @@ class TTSEngine:
     }
     
     def __init__(self, voice='hr-HR-GabrijelaNeural'):
-        self.voice = voice
-        self.ready = True
+        self.voice = voice; self.ready = True
+        self.replacer = NameReplacer()
     
     def is_ready(self): return self.ready
     
     def _chunk_text(self, text, max_chars=3000):
-        """Podijeli tekst na chunkove po rečenicama, max 3000 char"""
         sentences = re.split(r'(?<=[.!?])\s+', text)
         chunks, current = [], ""
         for s in sentences:
             if len(current) + len(s) > max_chars:
                 if current: chunks.append(current.strip())
                 current = s
-            else:
-                current += " " + s if current else s
+            else: current += " " + s if current else s
         if current: chunks.append(current.strip())
         return chunks or [text]
     
     def synthesize(self, text, output_path, voice=None):
         if voice is None: voice = self.voice
-        
+        text = self.replacer.apply(text)
         chunks = self._chunk_text(text)
         
-        async def _synthesize_all():
+        async def _synth():
             import edge_tts
-            # Sinteza svih chunkova sekvencijalno (da ne preoptereti API)
-            chunk_files = []
-            for i, chunk in enumerate(chunks):
+            files = []
+            for chunk in chunks:
                 tmp = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
-                communicate = edge_tts.Communicate(chunk, voice)
-                await communicate.save(tmp.name)
-                chunk_files.append(tmp.name)
+                await edge_tts.Communicate(chunk, voice).save(tmp.name)
+                files.append(tmp.name)
             
-            # Spoji sve chunkove
-            if len(chunk_files) == 1:
-                os.rename(chunk_files[0], output_path)
+            if len(files) == 1:
+                os.rename(files[0], output_path)
             else:
-                with open(output_path, 'wb') as out:
-                    for cf in chunk_files:
-                        with open(cf, 'rb') as inf:
-                            out.write(inf.read())
-                        os.remove(cf)
+                concat = output_path + '.txt'
+                with open(concat, 'w') as f:
+                    for fp in files: f.write(f"file '{os.path.abspath(fp)}'\n")
+                subprocess.run(['ffmpeg','-y','-f','concat','-safe','0','-i',concat,'-c:a','libmp3lame','-b:a','192k',output_path],capture_output=True)
+                os.remove(concat)
+                for fp in files: os.remove(fp)
         
-        asyncio.run(_synthesize_all())
+        asyncio.run(_synth())
         return output_path
     
     def stream_chapter(self, text, voice=None, max_chars=3000):
         if voice is None: voice = self.voice
-        text = text[:max_chars]
+        text = self.replacer.apply(text[:max_chars])
         tmpfile = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
         self.synthesize(text, tmpfile.name, voice)
         return tmpfile.name

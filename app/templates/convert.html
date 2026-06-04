@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="hr"><head><meta charset="UTF-8"><title>BooklyTTS Konverter</title><link rel="stylesheet" href="/static/css/style.css?v=8"></head>
+<body><div class="container"><header><h1>💾 Snimi MP3</h1><a href="/">← Nazad</a></header>
+<main>
+<div class="card"><h2>📖 EPUB</h2><input type="file" id="epub-file" accept=".epub"><button id="upload-btn">Upload</button><div id="upload-toast" class="toast hidden"></div><div id="book-info" style="display:none"><p id="book-title"></p><p id="book-chapters"></p></div></div>
+<div class="card" id="chapters-card" style="display:none"><h2>📑 Poglavlja</h2><div id="chapter-checkboxes"></div><select id="voice-select"><option value="hr-HR-GabrijelaNeural">Gabrijela</option><option value="hr-HR-SreckoNeural">Srecko</option></select><button onclick="testVoice()">🔊 Test</button><audio id="test-audio" style="display:none" controls></audio><button id="start-btn" class="btn btn-success btn-large">🎧 Snimi</button></div>
+<div id="progress-section" style="display:none"><div class="progress-bar"><div class="progress-fill"></div></div><p id="progress-text"></p></div>
+<div class="card"><h2>📁 Audiobookovi</h2><div id="audiobook-list"></div></div>
+</main></div>
+<script src="/static/js/convert.js?v=1"></script></body></html>

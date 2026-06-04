@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BooklyTTS - Pravila izgovora</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=8">
+</head>
+<body>
+    <div class="container">
+        <header><h1>🔧 Pravila izgovora</h1><a href="/">← Nazad</a></header>
+        <main id="rules-app">
+            <div class="card"><h2>📁 Profil</h2>
+                <select id="profile-select" onchange="loadRules()"><option value="_global">🌍 Globalno</option></select>
+                <button onclick="mergeGlobal()" style="margin-top:8px;">🔄 Spoji globalna</button>
+            </div>
+            <div class="card"><h2>➕ Dodaj</h2>
+                <input type="text" id="new-orig" placeholder="Original"><input type="text" id="new-repl" placeholder="Zamjena" style="margin-top:4px;">
+                <button onclick="addRule()" style="margin-top:4px;">Dodaj</button>
+            </div>
+            <div class="card"><h2>📥 Import/Export</h2>
+                <textarea id="import-area" placeholder="riječ=zamjena (jedno po liniji)"></textarea>
+                <button onclick="importRules()">📥 Import</button><button onclick="exportRules()">📤 Export</button>
+            </div>
+            <div class="card"><h2>📋 Pravila (<span id="count">0</span>)</h2>
+                <div id="rules-list"></div>
+            </div>
+        </main>
+    </div>
+    <script>
+        let profile='_global',rules={};
+        async function loadProfiles(){const r=await fetch('/profiles');const d=await r.json();const s=document.getElementById('profile-select');s.innerHTML='<option value="_global">🌍 Globalno</option>'+d.map(p=>`<option value="${p.name}">📖 ${p.name} (${p.rule_count})</option>`).join('');}
+        async function loadRules(){profile=document.getElementById('profile-select').value;const u=profile==='_global'?'/replacements':`/replacements?epub=${profile}`;const r=await fetch(u);rules=await r.json();render();}
+        function render(){const k=Object.keys(rules);document.getElementById('count').textContent=k.length;document.getElementById('rules-list').innerHTML=k.length===0?'<p class="empty">Nema</p>':'<table>'+k.map(k=>`<tr><td>${k}</td><td>→</td><td>${rules[k]}</td><td><button onclick="del('${k}')">✕</button></td></tr>`).join('')+'</table>';}
+        async function addRule(){const o=document.getElementById('new-orig').value.trim(),r=document.getElementById('new-repl').value.trim();if(!o||!r)return;const b={original:o,replacement:r};if(profile!=='_global')b.epub=profile;await fetch('/replacements',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});loadRules();loadProfiles();}
+        async function del(o){const u=profile==='_global'?`/replacements/${o}`:`/replacements/${o}?epub=${profile}`;await fetch(u,{method:'DELETE'});loadRules();loadProfiles();}
+        async function importRules(){const t=document.getElementById('import-area').value.trim();if(!t)return;const b={rules:t};if(profile!=='_global')b.epub=profile;await fetch('/replacements/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});loadRules();loadProfiles();}
+        async function exportRules(){const u=profile==='_global'?'/replacements/export':`/replacements/export?epub=${profile}`;const r=await fetch(u);const d=await r.json();document.getElementById('import-area').value=d.rules;}
+        async function mergeGlobal(){if(profile==='_global')return;await fetch(`/replacements/merge-global?epub=${profile}`);loadRules();}
+        loadProfiles();loadRules();
+    </script>
+</body>
+</html>
