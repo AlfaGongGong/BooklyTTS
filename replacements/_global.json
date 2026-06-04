@@ -1,0 +1,14 @@
+{
+  "A": "a", "B": "b", "C": "c", "Č": "č", "Ć": "ć",
+  "D": "d", "Dž": "dž", "Đ": "đ", "E": "e", "F": "f",
+  "G": "g", "H": "h", "I": "i", "J": "j", "K": "k",
+  "L": "l", "Lj": "lj", "M": "m", "N": "n", "Nj": "nj",
+  "O": "o", "P": "p", "Q": "q", "R": "r", "S": "s",
+  "Š": "š", "T": "t", "U": "u", "V": "v", "W": "w",
+  "X": "x", "Y": "y", "Z": "z", "Ž": "ž",
+  "Company": "Kompani", "Lady": "Lejdi", "City": "Siti",
+  "Eye": "Aj", "Glass": "Glas", "Day": "Dej", "Null": "Nal",
+  "Ruby": "Rubi", "Still": "Stil", "Office": "Ofis",
+  "Journey": "Džorni", "Mercy": "Mersi", "Horror": "Horor",
+  "Shadows": "Šadous", "Rebellion": "Rebelion"
+}
