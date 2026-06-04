@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BooklyTTS Reader</title>
+    <link rel="stylesheet" href="/static/css/reader.css?v=1">
+</head>
+<body>
+    <div class="app">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-left">
+                <a href="/" class="logo">📚 BooklyTTS</a>
+            </div>
+            <div class="header-center" id="book-title-header">Odaberi knjigu</div>
+            <div class="header-right">
+                <button class="icon-btn" onclick="toggleSettings()" title="Podešavanja">⚙️</button>
+                <button class="icon-btn" onclick="toggleTTS()" title="TTS kontrola">🎧</button>
+                <a href="/rules" class="icon-btn" title="Pravila izgovora">🔧</a>
+            </div>
+        </header>
+        
+        <!-- GLAVNI SADRŽAJ -->
+        <div class="main-content">
+            <!-- SIDEBAR: Poglavlja -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h3>📑 Poglavlja</h3>
+                    <input type="text" id="chapter-search" placeholder="🔍 Traži poglavlje..." oninput="filterChapters()">
+                </div>
+                <div class="chapter-list" id="chapter-list">
+                    <p class="empty">Uploaduj EPUB</p>
+                </div>
+            </aside>
+            
+            <!-- READER VIEW -->
+            <div class="reader-view" id="reader-view">
+                <div class="reader-toolbar">
+                    <button onclick="toggleSidebar()" title="Poglavlja">📑</button>
+                    <select id="font-size" onchange="changeFontSize(this.value)">
+                        <option value="14">14px</option>
+                        <option value="16" selected>16px</option>
+                        <option value="18">18px</option>
+                        <option value="20">20px</option>
+                        <option value="24">24px</option>
+                    </select>
+                    <button onclick="toggleTheme()" title="Tema">🌓</button>
+                    <span id="reading-progress">0%</span>
+                </div>
+                
+                <div class="reader-content" id="reader-content">
+                    <div class="welcome-screen">
+                        <h2>📚 Dobrodošli u BooklyTTS Reader</h2>
+                        <p>Uploaduj EPUB fajl za početak čitanja</p>
+                        <input type="file" id="epub-file" accept=".epub" style="display:none;">
+                        <button class="btn btn-primary" onclick="document.getElementById('epub-file').click()">
+                            📤 Upload EPUB
+                        </button>
+                        <p style="margin-top:12px;font-size:0.85em;">
+                            <a href="/rules">🔧 Podesi izgovor imena</a> · 
+                            <a href="/convert">💾 Snimi MP3</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- TTS PANEL (dolje) -->
+        <div class="tts-panel" id="tts-panel" style="display:none;">
+            <div class="ttp-header">
+                <span>🎧 TTS Kontrola</span>
+                <button onclick="toggleTTS()">✕</button>
+            </div>
+            <div class="tts-controls">
+                <select id="tts-voice">
+                    <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (ž)</option>
+                    <option value="hr-HR-SreckoNeural">Srecko (m)</option>
+                    <option value="bs-BA-VesnaNeural">Vesna (ž)</option>
+                    <option value="bs-BA-GoranNeural">Goran (m)</option>
+                </select>
+                <div class="rate-control">
+                    <span>⚡ <span id="rate-display">1.0x</span></span>
+                    <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateTTSRate(this.value)">
+                </div>
+                <label class="bg-toggle">
+                    <input type="checkbox" id="bg-mode"> 📱 Pozadina
+                </label>
+            </div>
+            <div class="tts-actions">
+                <button id="tts-play-btn" class="btn btn-success" onclick="ttsPlay()">▶️ Play</button>
+                <button id="tts-pause-btn" class="btn" onclick="ttsPause()" style="display:none;">⏸️ Pauza</button>
+                <button id="tts-stop-btn" class="btn btn-danger" onclick="ttsStop()" style="display:none;">⏹️ Stop</button>
+                <button class="btn" onclick="ttsPrev()">⏮️</button>
+                <button class="btn" onclick="ttsNext()">⏭️</button>
+            </div>
+            <div class="tts-status" id="tts-status">Spreman</div>
+        </div>
+    </div>
+    
+    <script src="/static/js/reader.js?v=1"></script>
+</body>
+</html>

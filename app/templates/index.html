@@ -4,153 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BooklyTTS</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=6">
-    <style>
-        .text-preview {
-            max-height: 300px; overflow-y: auto; padding: 12px;
-            background: rgba(0,0,0,0.3); border-radius: 8px;
-            font-size: 0.95em; line-height: 1.6; margin: 8px 0;
-            white-space: pre-wrap; color: #ccc;
-        }
-        .text-preview .highlight {
-            background: rgba(123,104,238,0.4); color: #fff;
-            padding: 2px 0; border-radius: 3px;
-            transition: background 0.3s;
-        }
-        .text-preview .current-word {
-            background: #38ef7d; color: #000;
-            font-weight: bold; padding: 2px 4px; border-radius: 3px;
-        }
-        .bg-toggle { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
-        .bg-toggle input[type="checkbox"] { width: auto; }
-        .bg-active { color: #38ef7d; }
-    </style>
+    <link rel="stylesheet" href="/static/css/style.css?v=8">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>📚 BooklyTTS</h1>
-            <p class="subtitle">Čitaj uživo ili snimi audiobook</p>
-        </header>
-        <main>
-            <!-- UPLOAD -->
-            <section class="card">
-                <h2>📖 EPUB</h2>
-                <input type="file" name="epub_file" accept=".epub" id="epub-file">
-                <button class="btn btn-primary" id="upload-btn">Upload EPUB</button>
-                <div id="upload-toast" class="toast hidden"></div>
-                <div id="epub-info" style="display:none;">
-                    <p><strong>📕</strong> <span id="epub-title"></span></p>
-                    <p><strong>✍️</strong> <span id="epub-author"></span></p>
-                    <p><strong>Poglavlja:</strong> <span id="epub-chapters-count"></span></p>
-                </div>
-            </section>
+    <div class="container" style="text-align:center;padding-top:60px;">
+        <h1>📚 BooklyTTS</h1>
+        <p class="subtitle">EPUB u prirodni govor</p>
+        
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:40px 0;">
+            <a href="/reader" class="feature-card">
+                <span style="font-size:3em;">📖</span>
+                <h3>Reader</h3>
+                <p>Čitaj i slušaj knjige sa TTS-om</p>
+            </a>
             
-            <!-- TABOVI -->
-            <div class="tabs" id="tabs-section" style="display:none;">
-                <button class="tab active" onclick="switchTab('listen')">🎧 Slušaj uživo</button>
-                <button class="tab" onclick="switchTab('convert')">💾 Snimi MP3</button>
-            </div>
+            <a href="/convert" class="feature-card">
+                <span style="font-size:3em;">💾</span>
+                <h3>Konverter</h3>
+                <p>Snimi MP3 audiobook</p>
+            </a>
             
-            <!-- TAB: SLUŠAJ -->
-            <div id="tab-listen" class="tab-content active">
-                <section class="card">
-                    <h2>🎤 Glas i brzina</h2>
-                    <select id="voice-select-listen">
-                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (HR ž)</option>
-                        <option value="hr-HR-SreckoNeural">Srecko (HR m)</option>
-                        <option value="bs-BA-VesnaNeural">Vesna (BS ž)</option>
-                        <option value="bs-BA-GoranNeural">Goran (BS m)</option>
-                    </select>
-                    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
-                        <span>⚡ <span id="rate-value">1.0x</span></span>
-                        <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)" style="flex:1;">
-                    </div>
-                    <div class="bg-toggle">
-                        <input type="checkbox" id="bg-mode" onchange="toggleBackground()">
-                        <label for="bg-mode">📱 <span id="bg-label">Background playback (ekran može biti ugašen)</span></label>
-                        <span id="bg-indicator" style="display:none;" class="bg-active">● ACTIVE</span>
-                    </div>
-                </section>
-                
-                <section class="card">
-                    <h2>📑 Odaberi odakle počinješ</h2>
-                    <select id="chapter-select-listen" onchange="updateChapterTitle()" style="width:100%;">
-                        <option value="0">Odaberi poglavlje...</option>
-                    </select>
-                    <input type="text" id="search-input-listen" placeholder="Ili unesi rečenicu - čita od nje..." style="width:100%;margin-top:8px;">
-                    <p style="font-size:0.8em;color:#aaa;">💡 Prazno = od početka poglavlja</p>
-                </section>
-                
-                <section class="card">
-                    <h2>▶️ Player</h2>
-                    <div class="title" id="chapter-title-display">📖 Odaberi poglavlje</div>
-                    <audio id="audio-player" controls style="width:100%;margin:8px 0;"></audio>
-                    <p id="listen-status">Spreman</p>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-                        <button id="play-btn-listen" class="btn btn-success" onclick="startPlayback()">▶️ Play</button>
-                        <button id="stop-btn-listen" class="btn btn-danger" onclick="stopPlayback()" style="display:none;">⏹️ Stop</button>
-                        <button class="btn btn-primary" onclick="prevChapter()">⏮️</button>
-                        <button class="btn btn-primary" onclick="nextChapter()">⏭️</button>
-                    </div>
-                    
-                    <!-- TEXT PREVIEW SA HIGHLIGHT-OM -->
-                    <div id="text-preview-section" style="display:none;">
-                        <p style="font-size:0.8em;color:#aaa;margin-bottom:4px;">📝 Tekst koji se čita:</p>
-                        <div class="text-preview" id="text-preview"></div>
-                    </div>
-                </section>
-            </div>
-            
-            <!-- TAB: SNIMI MP3 -->
-            <div id="tab-convert" class="tab-content">
-                <section class="card">
-                    <h2>📊 Status</h2>
-                    <div><span class="status-dot" id="status-dot"></span> <span id="status-text">Provjeravam...</span></div>
-                    <p id="disk-info" style="font-size:0.8em;color:#aaa;"></p>
-                </section>
-                
-                <section class="card">
-                    <h2>🎤 Glas</h2>
-                    <select id="voice-select-convert">
-                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (HR ž)</option>
-                        <option value="hr-HR-SreckoNeural">Srecko (HR m)</option>
-                        <option value="bs-BA-VesnaNeural">Vesna (BS ž)</option>
-                        <option value="bs-BA-GoranNeural">Goran (BS m)</option>
-                    </select>
-                    <button class="btn btn-small" onclick="testVoice()" style="margin-top:8px;background:#e67e22;">🔊 Testiraj glas</button>
-                    <audio id="test-audio" style="display:none;width:100%;margin-top:4px;" controls></audio>
-                </section>
-                
-                <section class="card" id="chapter-section" style="display:none;">
-                    <h2>📑 Odaberi poglavlja</h2>
-                    <div style="margin-bottom:8px;">
-                        <button class="btn btn-small" onclick="selectAllChapters()">Sve</button>
-                        <button class="btn btn-small" onclick="deselectAllChapters()">Ništa</button>
-                        <span id="chapter-count" style="color:#aaa;font-size:0.85em;"></span>
-                    </div>
-                    <div id="chapter-list" style="max-height:200px;overflow-y:auto;"></div>
-                </section>
-                
-                <section class="card">
-                    <h2>▶️ Konverzija</h2>
-                    <button id="start-btn" class="btn btn-success btn-large">🎧 Pokreni konverziju</button>
-                    <div id="progress-section" style="display:none;">
-                        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-                        <p id="progress-text">⏳ Priprema...</p>
-                        <p id="progress-detail" style="font-size:0.85em;color:#4ecdc4;"></p>
-                    </div>
-                </section>
-                
-                <section class="card">
-                    <h2>📁 Audiobookovi</h2>
-                    <div id="audiobook-list"><p class="loading">Učitavanje...</p></div>
-                </section>
-            </div>
-        </main>
-        <footer><p>BooklyTTS · edge-tts · HR/BS/SR</p></footer>
+            <a href="/rules" class="feature-card">
+                <span style="font-size:3em;">🔧</span>
+                <h3>Pravila</h3>
+                <p>Podesi izgovor imena</p>
+            </a>
+        </div>
+        
+        <footer style="margin-top:60px;">
+            <p>BooklyTTS · edge-tts · HR/BS/SR · <a href="https://github.com/AlfaGongGong/BooklyTTS">GitHub</a></p>
+        </footer>
     </div>
     
-    <script src="/static/js/app.js?v=6"></script>
+    <style>
+        .feature-card {
+            display: block; width: 220px; padding: 30px 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; text-decoration: none; color: white;
+            transition: all 0.3s;
+        }
+        .feature-card:hover { background: rgba(123,104,238,0.15); transform: translateY(-4px); }
+        .feature-card h3 { margin: 12px 0 8px; color: #7b68ee; }
+        .feature-card p { font-size: 0.85em; color: #aaa; }
+    </style>
 </body>
 </html>

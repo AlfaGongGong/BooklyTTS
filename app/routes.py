@@ -178,3 +178,11 @@ def download_file(filename):
 def conversion_history():
     from app.database import get_history
     return jsonify(get_history(20))
+
+@main_bp.route('/reader')
+def reader_page():
+    return render_template('reader.html')
+
+@main_bp.route('/convert')
+def convert_page():
+    return render_template('index.html')
