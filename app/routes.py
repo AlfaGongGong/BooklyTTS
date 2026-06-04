@@ -1,12 +1,21 @@
-import os, uuid, json, threading, time
-from flask import Blueprint, render_template, request, jsonify, send_file, current_app, Response
+import os, uuid, json, threading, time, zipfile
+from flask import Blueprint, render_template, request, jsonify, send_file, current_app, Response, abort
 from werkzeug.utils import secure_filename
 from app.tts_engine import TTSEngine
 from app.epub_processor import EPUBProcessor
 from app.audio_builder import AudioBuilder
 
 main_bp = Blueprint('main', __name__)
-jobs = {}  # job_id -> {status, progress, result}
+jobs = {}
+
+def is_valid_epub(filepath):
+    """Provjeri da li je fajl stvarno EPUB"""
+    try:
+        with zipfile.ZipFile(filepath, 'r') as zf:
+            names = zf.namelist()
+            return 'mimetype' in names or 'META-INF/container.xml' in names
+    except:
+        return False
 
 @main_bp.route('/')
 def index():
@@ -26,14 +35,20 @@ def status():
 def upload_epub():
     if 'epub_file' not in request.files:
         return jsonify({'error': 'Nema fajla'}), 400
+    
     file = request.files['epub_file']
     if not file.filename.endswith('.epub'):
-        return jsonify({'error': 'Mora biti .epub'}), 400
+        return jsonify({'error': 'Mora biti .epub fajl'}), 400
     
     filename = f"{uuid.uuid4().hex}_{file.filename}"
     filepath = os.path.join('uploads', filename)
     os.makedirs('uploads', exist_ok=True)
     file.save(filepath)
+    
+    # MIME provjera
+    if not is_valid_epub(filepath):
+        os.remove(filepath)
+        return jsonify({'error': 'Fajl nije validan EPUB (nema container.xml)'}), 400
     
     epub_proc = EPUBProcessor()
     try:
@@ -52,7 +67,7 @@ def start_conversion():
     data = request.get_json()
     epub_filename = data.get('epub_filename')
     voice = data.get('voice', 'hr-HR-GabrijelaNeural')
-    chapter_ids = data.get('chapters', [])  # odabrana poglavlja
+    chapter_ids = data.get('chapters', [])
     
     if not epub_filename:
         return jsonify({'error': 'Nedostaje EPUB'}), 400
@@ -69,7 +84,6 @@ def start_conversion():
             epub_proc = EPUBProcessor()
             all_chapters = epub_proc.extract_chapters(epub_path)
             
-            # Filtriraj odabrana poglavlja
             if chapter_ids:
                 chapters = [c for c in all_chapters if c['id'] in chapter_ids]
             else:
@@ -155,7 +169,12 @@ def download_file(filename):
     output_dir = os.path.abspath('output')
     filepath = os.path.abspath(os.path.join(output_dir, secure_filename(filename)))
     if not filepath.startswith(output_dir):
-        return jsonify({'error': 'Nedozvoljena putanja'}), 403
+        abort(403)
     if not os.path.exists(filepath):
         return jsonify({'error': 'Fajl ne postoji'}), 404
     return send_file(filepath, as_attachment=True, download_name=filename)
+
+@main_bp.route('/history')
+def conversion_history():
+    from app.database import get_history
+    return jsonify(get_history(20))

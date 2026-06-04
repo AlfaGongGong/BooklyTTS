@@ -1,21 +1,38 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #1a1a2e; color: #e0e0e0; min-height: 100vh; }
-.container { max-width: 700px; margin: 0 auto; padding: 20px; }
+.container { max-width: 750px; margin: 0 auto; padding: 20px; }
 header { text-align: center; padding: 30px 20px 20px; }
 header h1 { font-size: 2.2em; color: #7b68ee; }
 .subtitle { color: #aaa; margin-top: 8px; }
-.lang-info { font-size: 0.85em; color: #4ecdc4; margin-top: 8px; padding: 8px; background: rgba(78,205,196,0.1); border-radius: 8px; }
-.card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; margin: 16px 0; }
-.card h2 { color: #7b68ee; margin-bottom: 16px; }
-.btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; }
+.card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; margin: 12px 0; }
+.card h2 { color: #7b68ee; margin-bottom: 12px; font-size: 1.2em; }
+.btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95em; transition: all 0.2s; }
+.btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; filter: none; }
 .btn-primary { background: #7b68ee; color: white; }
-.btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); color: white; }
-.btn-large { width: 100%; padding: 16px; font-size: 1.1em; margin-top: 12px; }
-input[type="file"], select { margin: 8px 0; padding: 8px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; width: 100%; }
-.status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+.btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); color: #000; }
+.btn-small { padding: 6px 12px; font-size: 0.8em; background: #444; color: white; }
+.btn-test { background: #e67e22; }
+.btn-download { background: #7b68ee; color: white; text-decoration: none; }
+.btn-large { width: 100%; padding: 16px; font-size: 1.1em; margin-top: 8px; }
+input[type="file"] { padding: 8px; background: rgba(255,255,255,0.1); border-radius: 8px; color: white; width: 100%; margin: 8px 0; }
+select { padding: 8px 12px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; width: 100%; margin: 4px 0; }
+.status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ffa500; margin-right: 8px; }
 .status-dot.ready { background: #38ef7d; }
-ul { list-style: none; }
-li { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-li.empty { color: #666; font-style: italic; }
+.toast { padding: 10px 16px; border-radius: 8px; margin: 8px 0; font-size: 0.9em; }
+.toast.info { background: rgba(123,104,238,0.3); }
+.toast.success { background: rgba(56,239,125,0.3); }
+.toast.error { background: rgba(255,71,87,0.3); }
+.toast.hidden { display: none; }
+.chapter-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-size: 0.9em; }
+.chapter-item:hover { background: rgba(255,255,255,0.05); }
+.char-count { color: #666; font-size: 0.8em; margin-left: auto; }
+.progress-bar { width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; margin: 12px 0; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); width: 0%; transition: width 0.5s; border-radius: 6px; }
+.audiobook-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
+.book-info { color: #666; font-size: 0.8em; }
+.empty, .loading { color: #666; font-style: italic; padding: 12px 0; }
 footer { text-align: center; padding: 40px 20px; color: #666; font-size: 0.85em; }
 footer a { color: #7b68ee; }
+#chapter-list { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 4px 8px; }
+#progress-detail { color: #4ecdc4; }

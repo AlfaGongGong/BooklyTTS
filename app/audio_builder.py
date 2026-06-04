@@ -1,16 +1,26 @@
-"""Audio builder za spajanje chunkova"""
-import os
-from pydub import AudioSegment
+"""Audio builder koristeci ffmpeg"""
+import os, subprocess
 
 class AudioBuilder:
-    def __init__(self, output_dir): self.output_dir = output_dir
+    def __init__(self, output_dir='output'):
+        os.makedirs(output_dir, exist_ok=True)
     
-    def concatenate(self, audio_files, output_path, crossfade_ms=50, add_silence_ms=500):
-        if not audio_files: raise ValueError("Nema audio fajlova")
-        combined = AudioSegment.from_file(audio_files[0])
-        silence = AudioSegment.silent(duration=add_silence_ms)
-        for audio_file in audio_files[1:]:
-            combined = combined.append(silence, crossfade=0)
-            combined = combined.append(AudioSegment.from_file(audio_file), crossfade=crossfade_ms)
-        combined.export(output_path, format="mp3", bitrate="192k")
+    def concatenate(self, audio_files, output_path, crossfade_ms=50):
+        if not audio_files:
+            raise ValueError("Nema audio fajlova")
+        
+        concat_file = output_path + '.concat.txt'
+        with open(concat_file, 'w') as f:
+            for af in audio_files:
+                f.write(f"file '{os.path.abspath(af)}'\n")
+        
+        subprocess.run([
+            'ffmpeg', '-y', '-f', 'concat', '-safe', '0',
+            '-i', concat_file, '-c:a', 'libmp3lame', '-b:a', '192k', output_path
+        ], check=True, capture_output=True)
+        
+        os.remove(concat_file)
+        
+        size_mb = os.path.getsize(output_path) / (1024*1024)
+        print(f"[AudioBuilder] {output_path} ({size_mb:.1f} MB)")
         return output_path

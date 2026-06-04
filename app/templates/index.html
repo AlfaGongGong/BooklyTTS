@@ -4,72 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BooklyTTS - EPUB u Audiobook</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=3">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>📚 BooklyTTS</h1>
             <p class="subtitle">EPUB → Audiobook sa Microsoft Neural glasovima</p>
-            <p class="lang-info">🎯 HR/BS/SR glasovi: Gabrijela, Srecko, Goran, Vesna</p>
         </header>
         <main>
+            <!-- STATUS -->
             <section class="card status-section">
                 <h2>📊 Status</h2>
                 <div id="status-indicator">
-                    <span class="status-dot ready"></span>
-                    <span id="status-text">Spreman - Microsoft Edge TTS</span>
+                    <span class="status-dot" id="status-dot"></span>
+                    <span id="status-text">Provjeravam...</span>
                 </div>
+                <p id="disk-info" style="font-size:0.8em;color:#aaa;"></p>
             </section>
+            
+            <!-- GLAS -->
             <section class="card">
-                <h2>🎤 Odaberi glas</h2>
+                <h2>🎤 Glas</h2>
                 <select id="voice-select">
                     <optgroup label="Hrvatski">
-                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (zenski)</option>
-                        <option value="hr-HR-SreckoNeural">Srecko (muski)</option>
+                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (ž)</option>
+                        <option value="hr-HR-SreckoNeural">Srecko (m)</option>
                     </optgroup>
                     <optgroup label="Bosanski">
-                        <option value="bs-BA-VesnaNeural">Vesna (zenski)</option>
-                        <option value="bs-BA-GoranNeural">Goran (muski)</option>
+                        <option value="bs-BA-VesnaNeural">Vesna (ž)</option>
+                        <option value="bs-BA-GoranNeural">Goran (m)</option>
                     </optgroup>
                     <optgroup label="Srpski">
-                        <option value="sr-RS-SophieNeural">Sophie (zenski)</option>
-                        <option value="sr-RS-NicholasNeural">Nicholas (muski)</option>
-                    </optgroup>
-                    <optgroup label="Ceski">
-                        <option value="cs-CZ-VlastaNeural">Vlasta (zenski)</option>
-                        <option value="cs-CZ-AntoninNeural">Antonin (muski)</option>
+                        <option value="sr-RS-SophieNeural">Sophie (ž)</option>
+                        <option value="sr-RS-NicholasNeural">Nicholas (m)</option>
                     </optgroup>
                 </select>
+                <button class="btn btn-small btn-test" onclick="testVoice()" style="margin-top:8px;">🔊 Testiraj glas</button>
+                <audio id="test-audio" style="display:none;width:100%;margin-top:4px;" controls></audio>
             </section>
+            
+            <!-- EPUB UPLOAD -->
             <section class="card">
-                <h2>📖 EPUB fajl</h2>
-                <form id="epub-form" enctype="multipart/form-data">
+                <h2>📖 EPUB</h2>
+                <div class="upload-area" id="upload-area">
                     <input type="file" name="epub_file" accept=".epub" id="epub-file">
-                    <button type="submit" class="btn btn-primary">Upload EPUB</button>
-                </form>
+                    <button class="btn btn-primary" id="upload-btn">Upload EPUB</button>
+                </div>
+                <div id="upload-toast" class="toast hidden"></div>
                 <div id="epub-info" style="display:none;">
-                    <p><strong>Naslov:</strong> <span id="epub-title"></span></p>
-                    <p><strong>Autor:</strong> <span id="epub-author"></span></p>
-                    <p><strong>Poglavlja:</strong> <span id="epub-chapters"></span></p>
+                    <p><strong>📕</strong> <span id="epub-title"></span></p>
+                    <p><strong>✍️</strong> <span id="epub-author"></span></p>
                 </div>
             </section>
+            
+            <!-- ODABIR POGLAVLJA -->
+            <section class="card" id="chapter-section" style="display:none;">
+                <h2>📑 Odaberi poglavlja</h2>
+                <div style="margin-bottom:8px;">
+                    <button class="btn btn-small" onclick="selectAllChapters()">Odaberi sve</button>
+                    <button class="btn btn-small" onclick="deselectAllChapters()">Poništi</button>
+                    <span id="chapter-count" style="color:#aaa;font-size:0.85em;"></span>
+                </div>
+                <div id="chapter-list" style="max-height:200px;overflow-y:auto;"></div>
+            </section>
+            
+            <!-- KONVERZIJA -->
             <section class="card">
                 <h2>▶️ Konverzija</h2>
-                <button id="start-conversion" class="btn btn-success btn-large">🎧 Pokreni konverziju</button>
-                <div id="progress" style="display:none;">
-                    <p id="progress-text">⏳ Konverzija u toku...</p>
+                <button id="start-btn" class="btn btn-success btn-large">🎧 Pokreni konverziju</button>
+                <div id="progress-section" style="display:none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="progress-text">⏳ Priprema...</p>
+                    <p id="progress-detail" style="font-size:0.85em;color:#4ecdc4;"></p>
                 </div>
             </section>
+            
+            <!-- AUDIOBOOKOVI -->
             <section class="card">
                 <h2>📁 Audiobookovi</h2>
-                <ul id="output-list"><li class="empty">Uploaduj EPUB za konverziju</li></ul>
+                <div id="audiobook-list">
+                    <p class="loading">Učitavanje...</p>
+                </div>
             </section>
         </main>
         <footer>
-            <p>BooklyTTS · Microsoft Edge Neural TTS · HR/BS/SR · <a href="https://github.com">GitHub</a></p>
+            <p>BooklyTTS · edge-tts · HR/BS/SR · <a href="/player">Stream Player</a></p>
         </footer>
     </div>
-    <script src="/static/js/app.js"></script>
+    
+    <script src="/static/js/app.js?v=3"></script>
 </body>
 </html>
