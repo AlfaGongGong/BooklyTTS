@@ -4,7 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BooklyTTS</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
+    <link rel="stylesheet" href="/static/css/style.css?v=6">
+    <style>
+        .text-preview {
+            max-height: 300px; overflow-y: auto; padding: 12px;
+            background: rgba(0,0,0,0.3); border-radius: 8px;
+            font-size: 0.95em; line-height: 1.6; margin: 8px 0;
+            white-space: pre-wrap; color: #ccc;
+        }
+        .text-preview .highlight {
+            background: rgba(123,104,238,0.4); color: #fff;
+            padding: 2px 0; border-radius: 3px;
+            transition: background 0.3s;
+        }
+        .text-preview .current-word {
+            background: #38ef7d; color: #000;
+            font-weight: bold; padding: 2px 4px; border-radius: 3px;
+        }
+        .bg-toggle { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+        .bg-toggle input[type="checkbox"] { width: auto; }
+        .bg-active { color: #38ef7d; }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -13,7 +33,7 @@
             <p class="subtitle">Čitaj uživo ili snimi audiobook</p>
         </header>
         <main>
-            <!-- ZAJEDNIČKI UPLOAD (uvijek vidljiv) -->
+            <!-- UPLOAD -->
             <section class="card">
                 <h2>📖 EPUB</h2>
                 <input type="file" name="epub_file" accept=".epub" id="epub-file">
@@ -32,7 +52,7 @@
                 <button class="tab" onclick="switchTab('convert')">💾 Snimi MP3</button>
             </div>
             
-            <!-- ========== TAB: SLUŠAJ UŽIVO ========== -->
+            <!-- TAB: SLUŠAJ -->
             <div id="tab-listen" class="tab-content active">
                 <section class="card">
                     <h2>🎤 Glas i brzina</h2>
@@ -43,8 +63,13 @@
                         <option value="bs-BA-GoranNeural">Goran (BS m)</option>
                     </select>
                     <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
-                        <span style="white-space:nowrap;">⚡ <span id="rate-value">1.0x</span></span>
+                        <span>⚡ <span id="rate-value">1.0x</span></span>
                         <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)" style="flex:1;">
+                    </div>
+                    <div class="bg-toggle">
+                        <input type="checkbox" id="bg-mode" onchange="toggleBackground()">
+                        <label for="bg-mode">📱 <span id="bg-label">Background playback (ekran može biti ugašen)</span></label>
+                        <span id="bg-indicator" style="display:none;" class="bg-active">● ACTIVE</span>
                     </div>
                 </section>
                 
@@ -54,7 +79,7 @@
                         <option value="0">Odaberi poglavlje...</option>
                     </select>
                     <input type="text" id="search-input-listen" placeholder="Ili unesi rečenicu - čita od nje..." style="width:100%;margin-top:8px;">
-                    <p style="font-size:0.8em;color:#aaa;margin-top:4px;">💡 Prazno polje + odabrano poglavlje = od početka poglavlja</p>
+                    <p style="font-size:0.8em;color:#aaa;">💡 Prazno = od početka poglavlja</p>
                 </section>
                 
                 <section class="card">
@@ -62,16 +87,22 @@
                     <div class="title" id="chapter-title-display">📖 Odaberi poglavlje</div>
                     <audio id="audio-player" controls style="width:100%;margin:8px 0;"></audio>
                     <p id="listen-status">Spreman</p>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
                         <button id="play-btn-listen" class="btn btn-success" onclick="startPlayback()">▶️ Play</button>
                         <button id="stop-btn-listen" class="btn btn-danger" onclick="stopPlayback()" style="display:none;">⏹️ Stop</button>
                         <button class="btn btn-primary" onclick="prevChapter()">⏮️</button>
                         <button class="btn btn-primary" onclick="nextChapter()">⏭️</button>
                     </div>
+                    
+                    <!-- TEXT PREVIEW SA HIGHLIGHT-OM -->
+                    <div id="text-preview-section" style="display:none;">
+                        <p style="font-size:0.8em;color:#aaa;margin-bottom:4px;">📝 Tekst koji se čita:</p>
+                        <div class="text-preview" id="text-preview"></div>
+                    </div>
                 </section>
             </div>
             
-            <!-- ========== TAB: SNIMI MP3 ========== -->
+            <!-- TAB: SNIMI MP3 -->
             <div id="tab-convert" class="tab-content">
                 <section class="card">
                     <h2>📊 Status</h2>
@@ -92,7 +123,7 @@
                 </section>
                 
                 <section class="card" id="chapter-section" style="display:none;">
-                    <h2>📑 Odaberi poglavlja za snimanje</h2>
+                    <h2>📑 Odaberi poglavlja</h2>
                     <div style="margin-bottom:8px;">
                         <button class="btn btn-small" onclick="selectAllChapters()">Sve</button>
                         <button class="btn btn-small" onclick="deselectAllChapters()">Ništa</button>
@@ -120,6 +151,6 @@
         <footer><p>BooklyTTS · edge-tts · HR/BS/SR</p></footer>
     </div>
     
-    <script src="/static/js/app.js?v=5"></script>
+    <script src="/static/js/app.js?v=6"></script>
 </body>
 </html>

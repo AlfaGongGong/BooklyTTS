@@ -1,5 +1,41 @@
 // ========== ZAJEDNIČKE VARIJABLE ==========
 let allChapters = [], uploadedEpub = null;
+let wakeLock = null, keepAliveInterval = null;
+
+// ========== BACKGROUND MODE ==========
+function toggleBackground() {
+    const enabled = document.getElementById('bg-mode').checked;
+    document.getElementById('bg-indicator').style.display = enabled ? 'inline' : 'none';
+    
+    if (enabled) {
+        requestWakeLock();
+        startKeepAlive();
+    } else {
+        releaseWakeLock();
+        stopKeepAlive();
+    }
+}
+
+async function requestWakeLock() {
+    try {
+        if ('wakeLock' in navigator) {
+            wakeLock = await navigator.wakeLock.request('screen');
+            console.log('Wake Lock aktiviran');
+        }
+    } catch(e) {}
+}
+
+function releaseWakeLock() {
+    if (wakeLock) { wakeLock.release().catch(()=>{}); wakeLock = null; }
+}
+
+function startKeepAlive() {
+    keepAliveInterval = setInterval(() => fetch('/status').catch(()=>{}), 15000);
+}
+
+function stopKeepAlive() {
+    if (keepAliveInterval) { clearInterval(keepAliveInterval); keepAliveInterval = null; }
+}
 
 // ========== TAB SWITCH ==========
 function switchTab(tab) {
@@ -10,7 +46,7 @@ function switchTab(tab) {
     if (tab === 'convert') { checkStatus(); loadAudiobooks(); }
 }
 
-// ========== UPLOAD (zajednički) ==========
+// ========== UPLOAD ==========
 function showToast(msg, type='info') {
     const t = document.getElementById('upload-toast');
     t.textContent = msg; t.className = 'toast ' + type; t.classList.remove('hidden');
@@ -32,25 +68,20 @@ document.getElementById('upload-btn').addEventListener('click', async () => {
             uploadedEpub = d.filename;
             allChapters = d.chapters;
             
-            // Zajednički info
             document.getElementById('epub-info').style.display = 'block';
             document.getElementById('epub-title').textContent = d.metadata.title;
             document.getElementById('epub-author').textContent = d.metadata.author;
             document.getElementById('epub-chapters-count').textContent = d.chapter_count;
             
-            // Popuni player selector
             const sel = document.getElementById('chapter-select-listen');
             sel.innerHTML = '<option value="0">Od početka</option>' + 
                 d.chapters.map((c, i) => `<option value="${i}">${i+1}. ${c.title}</option>`).join('');
             
-            // Popuni konverter listu
             renderChapterList();
             document.getElementById('chapter-section').style.display = 'block';
-            
-            // Prikaži tabove
             document.getElementById('tabs-section').style.display = 'flex';
             
-            showToast('✅ ' + d.chapter_count + ' poglavlja učitano', 'success');
+            showToast('✅ ' + d.chapter_count + ' poglavlja', 'success');
         } else {
             showToast('❌ ' + d.error, 'error');
         }
@@ -59,8 +90,9 @@ document.getElementById('upload-btn').addEventListener('click', async () => {
     }
 });
 
-// ========== PLAYER (LISTEN TAB) ==========
+// ========== PLAYER SA HIGHLIGHT-OM ==========
 let currentChapter = 0, currentJobId = null, stopFlag = false, currentRate = 1.0;
+let currentText = '', currentChunkIndex = 0;
 
 function updateChapterTitle() {
     currentChapter = parseInt(document.getElementById('chapter-select-listen').value);
@@ -75,6 +107,34 @@ function updateRate(val) {
     document.getElementById('audio-player').playbackRate = currentRate;
 }
 
+function highlightTextInPreview(text, chunkIndex) {
+    const preview = document.getElementById('text-preview');
+    if (!text) return;
+    
+    // Podijeli na chunkove za prikaz
+    const words = text.split(/\s+/);
+    const chunkSize = 50; // riječi po chunku
+    const start = chunkIndex * chunkSize;
+    const end = start + chunkSize;
+    
+    let html = '';
+    for (let i = 0; i < words.length; i++) {
+        if (i >= start && i < end) {
+            html += `<span class="highlight">${words[i]}</span> `;
+        } else {
+            html += words[i] + ' ';
+        }
+    }
+    
+    preview.innerHTML = html;
+    
+    // Skrolaj do highlight-ovanog dijela
+    const highlight = preview.querySelector('.highlight');
+    if (highlight) {
+        highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
 async function startPlayback() {
     if (!uploadedEpub) { showToast('Prvo uploaduj EPUB!', 'error'); return; }
     
@@ -82,10 +142,14 @@ async function startPlayback() {
     const voice = document.getElementById('voice-select-listen').value;
     const searchText = document.getElementById('search-input-listen').value.trim();
     currentChapter = parseInt(document.getElementById('chapter-select-listen').value);
+    currentChunkIndex = 0;
     
     document.getElementById('play-btn-listen').style.display = 'none';
     document.getElementById('stop-btn-listen').style.display = 'inline-block';
     document.getElementById('listen-status').textContent = '⏳ Generišem...';
+    
+    // Prikaži text preview
+    document.getElementById('text-preview-section').style.display = 'block';
     
     try {
         let resp;
@@ -99,18 +163,23 @@ async function startPlayback() {
                 currentChapter = fd.chapter_idx;
                 document.getElementById('chapter-select-listen').value = currentChapter;
                 document.getElementById('chapter-title-display').textContent = '📖 ' + fd.chapter_title;
+                currentText = fd.text_from_position;
+                highlightTextInPreview(currentText, 0);
                 resp = await fetch('/stream-from-text', {
                     method: 'POST', headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({text: fd.text_from_position, voice: voice})
                 });
             } else {
-                document.getElementById('listen-status').textContent = '❌ Rečenica nije pronađena';
-                document.getElementById('play-btn-listen').style.display = 'inline-block';
-                document.getElementById('stop-btn-listen').style.display = 'none';
+                document.getElementById('listen-status').textContent = '❌ Nije pronađeno';
+                resetPlayButton();
                 return;
             }
         } else {
             updateChapterTitle();
+            if (allChapters[currentChapter]) {
+                currentText = allChapters[currentChapter].text;
+                highlightTextInPreview(currentText, 0);
+            }
             resp = await fetch('/stream-start', {
                 method: 'POST', headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({chapter: currentChapter, voice: voice})
@@ -120,8 +189,7 @@ async function startPlayback() {
         if (data.job_id) { currentJobId = data.job_id; playNextChunk(); }
     } catch(e) {
         document.getElementById('listen-status').textContent = '❌ Greška';
-        document.getElementById('play-btn-listen').style.display = 'inline-block';
-        document.getElementById('stop-btn-listen').style.display = 'none';
+        resetPlayButton();
     }
 }
 
@@ -137,13 +205,17 @@ async function playNextChunk() {
             audio.playbackRate = currentRate;
             audio.play();
             document.getElementById('listen-status').textContent = '▶️ Reprodukcija...';
+            
+            // Update highlight
+            highlightTextInPreview(currentText, currentChunkIndex);
+            currentChunkIndex++;
+            
             audio.onended = () => { if (!stopFlag) playNextChunk(); };
         } else {
             const data = await resp.json();
             if (data.finished) {
                 document.getElementById('listen-status').textContent = '✅ Kraj';
-                document.getElementById('play-btn-listen').style.display = 'inline-block';
-                document.getElementById('stop-btn-listen').style.display = 'none';
+                resetPlayButton();
             }
         }
     } catch(e) { if (!stopFlag) setTimeout(playNextChunk, 1000); }
@@ -152,9 +224,15 @@ async function playNextChunk() {
 function stopPlayback() {
     stopFlag = true; currentJobId = null;
     document.getElementById('audio-player').pause();
+    document.getElementById('text-preview-section').style.display = 'none';
+    resetPlayButton();
+    releaseWakeLock();
+    stopKeepAlive();
+}
+
+function resetPlayButton() {
     document.getElementById('play-btn-listen').style.display = 'inline-block';
     document.getElementById('stop-btn-listen').style.display = 'none';
-    document.getElementById('listen-status').textContent = '⏹️ Zaustavljeno';
 }
 
 function nextChapter() {
@@ -173,7 +251,7 @@ function prevChapter() {
     }
 }
 
-// ========== KONVERTER (CONVERT TAB) ==========
+// ========== KONVERTER ==========
 let selectedChapters = new Set();
 
 async function checkStatus() {
@@ -197,15 +275,10 @@ function renderChapterList() {
     updateChapterCount();
 }
 
-function toggleChapter(id) {
-    selectedChapters.has(id) ? selectedChapters.delete(id) : selectedChapters.add(id);
-    updateChapterCount();
-}
+function toggleChapter(id) { selectedChapters.has(id) ? selectedChapters.delete(id) : selectedChapters.add(id); updateChapterCount(); }
 function selectAllChapters() { allChapters.forEach(c => selectedChapters.add(c.id)); renderChapterList(); }
 function deselectAllChapters() { selectedChapters.clear(); renderChapterList(); }
-function updateChapterCount() {
-    document.getElementById('chapter-count').textContent = `(${selectedChapters.size}/${allChapters.length})`;
-}
+function updateChapterCount() { document.getElementById('chapter-count').textContent = `(${selectedChapters.size}/${allChapters.length})`; }
 
 async function testVoice() {
     const voice = document.getElementById('voice-select-convert').value;
@@ -219,11 +292,9 @@ async function testVoice() {
 document.getElementById('start-btn').addEventListener('click', async () => {
     if (!uploadedEpub) { showToast('Uploaduj EPUB', 'error'); return; }
     if (selectedChapters.size === 0) { showToast('Odaberi poglavlja', 'error'); return; }
-    
     const voice = document.getElementById('voice-select-convert').value;
     document.getElementById('progress-section').style.display = 'block';
     document.getElementById('start-btn').disabled = true;
-    
     try {
         const r = await fetch('/start-conversion', {
             method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -258,7 +329,6 @@ async function loadAudiobooks() {
     } catch(e) {}
 }
 
-// Init
 checkStatus();
 loadAudiobooks();
 setInterval(checkStatus, 60000);
