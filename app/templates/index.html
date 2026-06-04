@@ -3,98 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BooklyTTS - EPUB u Audiobook</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=3">
+    <title>BooklyTTS</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>📚 BooklyTTS</h1>
-            <p class="subtitle">EPUB → Audiobook sa Microsoft Neural glasovima</p>
+            <p class="subtitle">Čitaj uživo ili snimi audiobook</p>
         </header>
         <main>
-            <!-- STATUS -->
-            <section class="card status-section">
-                <h2>📊 Status</h2>
-                <div id="status-indicator">
-                    <span class="status-dot" id="status-dot"></span>
-                    <span id="status-text">Provjeravam...</span>
-                </div>
-                <p id="disk-info" style="font-size:0.8em;color:#aaa;"></p>
-            </section>
-            
-            <!-- GLAS -->
-            <section class="card">
-                <h2>🎤 Glas</h2>
-                <select id="voice-select">
-                    <optgroup label="Hrvatski">
-                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (ž)</option>
-                        <option value="hr-HR-SreckoNeural">Srecko (m)</option>
-                    </optgroup>
-                    <optgroup label="Bosanski">
-                        <option value="bs-BA-VesnaNeural">Vesna (ž)</option>
-                        <option value="bs-BA-GoranNeural">Goran (m)</option>
-                    </optgroup>
-                    <optgroup label="Srpski">
-                        <option value="sr-RS-SophieNeural">Sophie (ž)</option>
-                        <option value="sr-RS-NicholasNeural">Nicholas (m)</option>
-                    </optgroup>
-                </select>
-                <button class="btn btn-small btn-test" onclick="testVoice()" style="margin-top:8px;">🔊 Testiraj glas</button>
-                <audio id="test-audio" style="display:none;width:100%;margin-top:4px;" controls></audio>
-            </section>
-            
-            <!-- EPUB UPLOAD -->
+            <!-- ZAJEDNIČKI UPLOAD (uvijek vidljiv) -->
             <section class="card">
                 <h2>📖 EPUB</h2>
-                <div class="upload-area" id="upload-area">
-                    <input type="file" name="epub_file" accept=".epub" id="epub-file">
-                    <button class="btn btn-primary" id="upload-btn">Upload EPUB</button>
-                </div>
+                <input type="file" name="epub_file" accept=".epub" id="epub-file">
+                <button class="btn btn-primary" id="upload-btn">Upload EPUB</button>
                 <div id="upload-toast" class="toast hidden"></div>
                 <div id="epub-info" style="display:none;">
                     <p><strong>📕</strong> <span id="epub-title"></span></p>
                     <p><strong>✍️</strong> <span id="epub-author"></span></p>
+                    <p><strong>Poglavlja:</strong> <span id="epub-chapters-count"></span></p>
                 </div>
             </section>
             
-            <!-- ODABIR POGLAVLJA -->
-            <section class="card" id="chapter-section" style="display:none;">
-                <h2>📑 Odaberi poglavlja</h2>
-                <div style="margin-bottom:8px;">
-                    <button class="btn btn-small" onclick="selectAllChapters()">Odaberi sve</button>
-                    <button class="btn btn-small" onclick="deselectAllChapters()">Poništi</button>
-                    <span id="chapter-count" style="color:#aaa;font-size:0.85em;"></span>
-                </div>
-                <div id="chapter-list" style="max-height:200px;overflow-y:auto;"></div>
-            </section>
+            <!-- TABOVI -->
+            <div class="tabs" id="tabs-section" style="display:none;">
+                <button class="tab active" onclick="switchTab('listen')">🎧 Slušaj uživo</button>
+                <button class="tab" onclick="switchTab('convert')">💾 Snimi MP3</button>
+            </div>
             
-            <!-- KONVERZIJA -->
-            <section class="card">
-                <h2>▶️ Konverzija</h2>
-                <button id="start-btn" class="btn btn-success btn-large">🎧 Pokreni konverziju</button>
-                <div id="progress-section" style="display:none;">
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="progress-fill"></div>
+            <!-- ========== TAB: SLUŠAJ UŽIVO ========== -->
+            <div id="tab-listen" class="tab-content active">
+                <section class="card">
+                    <h2>🎤 Glas i brzina</h2>
+                    <select id="voice-select-listen">
+                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (HR ž)</option>
+                        <option value="hr-HR-SreckoNeural">Srecko (HR m)</option>
+                        <option value="bs-BA-VesnaNeural">Vesna (BS ž)</option>
+                        <option value="bs-BA-GoranNeural">Goran (BS m)</option>
+                    </select>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:8px;">
+                        <span style="white-space:nowrap;">⚡ <span id="rate-value">1.0x</span></span>
+                        <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)" style="flex:1;">
                     </div>
-                    <p id="progress-text">⏳ Priprema...</p>
-                    <p id="progress-detail" style="font-size:0.85em;color:#4ecdc4;"></p>
-                </div>
-            </section>
+                </section>
+                
+                <section class="card">
+                    <h2>📑 Odaberi odakle počinješ</h2>
+                    <select id="chapter-select-listen" onchange="updateChapterTitle()" style="width:100%;">
+                        <option value="0">Odaberi poglavlje...</option>
+                    </select>
+                    <input type="text" id="search-input-listen" placeholder="Ili unesi rečenicu - čita od nje..." style="width:100%;margin-top:8px;">
+                    <p style="font-size:0.8em;color:#aaa;margin-top:4px;">💡 Prazno polje + odabrano poglavlje = od početka poglavlja</p>
+                </section>
+                
+                <section class="card">
+                    <h2>▶️ Player</h2>
+                    <div class="title" id="chapter-title-display">📖 Odaberi poglavlje</div>
+                    <audio id="audio-player" controls style="width:100%;margin:8px 0;"></audio>
+                    <p id="listen-status">Spreman</p>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <button id="play-btn-listen" class="btn btn-success" onclick="startPlayback()">▶️ Play</button>
+                        <button id="stop-btn-listen" class="btn btn-danger" onclick="stopPlayback()" style="display:none;">⏹️ Stop</button>
+                        <button class="btn btn-primary" onclick="prevChapter()">⏮️</button>
+                        <button class="btn btn-primary" onclick="nextChapter()">⏭️</button>
+                    </div>
+                </section>
+            </div>
             
-            <!-- AUDIOBOOKOVI -->
-            <section class="card">
-                <h2>📁 Audiobookovi</h2>
-                <div id="audiobook-list">
-                    <p class="loading">Učitavanje...</p>
-                </div>
-            </section>
+            <!-- ========== TAB: SNIMI MP3 ========== -->
+            <div id="tab-convert" class="tab-content">
+                <section class="card">
+                    <h2>📊 Status</h2>
+                    <div><span class="status-dot" id="status-dot"></span> <span id="status-text">Provjeravam...</span></div>
+                    <p id="disk-info" style="font-size:0.8em;color:#aaa;"></p>
+                </section>
+                
+                <section class="card">
+                    <h2>🎤 Glas</h2>
+                    <select id="voice-select-convert">
+                        <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (HR ž)</option>
+                        <option value="hr-HR-SreckoNeural">Srecko (HR m)</option>
+                        <option value="bs-BA-VesnaNeural">Vesna (BS ž)</option>
+                        <option value="bs-BA-GoranNeural">Goran (BS m)</option>
+                    </select>
+                    <button class="btn btn-small" onclick="testVoice()" style="margin-top:8px;background:#e67e22;">🔊 Testiraj glas</button>
+                    <audio id="test-audio" style="display:none;width:100%;margin-top:4px;" controls></audio>
+                </section>
+                
+                <section class="card" id="chapter-section" style="display:none;">
+                    <h2>📑 Odaberi poglavlja za snimanje</h2>
+                    <div style="margin-bottom:8px;">
+                        <button class="btn btn-small" onclick="selectAllChapters()">Sve</button>
+                        <button class="btn btn-small" onclick="deselectAllChapters()">Ništa</button>
+                        <span id="chapter-count" style="color:#aaa;font-size:0.85em;"></span>
+                    </div>
+                    <div id="chapter-list" style="max-height:200px;overflow-y:auto;"></div>
+                </section>
+                
+                <section class="card">
+                    <h2>▶️ Konverzija</h2>
+                    <button id="start-btn" class="btn btn-success btn-large">🎧 Pokreni konverziju</button>
+                    <div id="progress-section" style="display:none;">
+                        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                        <p id="progress-text">⏳ Priprema...</p>
+                        <p id="progress-detail" style="font-size:0.85em;color:#4ecdc4;"></p>
+                    </div>
+                </section>
+                
+                <section class="card">
+                    <h2>📁 Audiobookovi</h2>
+                    <div id="audiobook-list"><p class="loading">Učitavanje...</p></div>
+                </section>
+            </div>
         </main>
-        <footer>
-            <p>BooklyTTS · edge-tts · HR/BS/SR · <a href="/player">Stream Player</a></p>
-        </footer>
+        <footer><p>BooklyTTS · edge-tts · HR/BS/SR</p></footer>
     </div>
     
-    <script src="/static/js/app.js?v=3"></script>
+    <script src="/static/js/app.js?v=5"></script>
 </body>
 </html>

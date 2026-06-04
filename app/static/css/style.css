@@ -36,3 +36,16 @@ footer { text-align: center; padding: 40px 20px; color: #666; font-size: 0.85em;
 footer a { color: #7b68ee; }
 #chapter-list { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 4px 8px; }
 #progress-detail { color: #4ecdc4; }
+
+/* TABOVI */
+.tabs { display: flex; gap: 4px; margin-bottom: 8px; }
+.tab { 
+    flex: 1; padding: 12px; background: rgba(255,255,255,0.05); 
+    border: 1px solid rgba(255,255,255,0.1); color: #aaa; 
+    border-radius: 12px 12px 0 0; cursor: pointer; font-size: 0.95em; 
+    transition: all 0.2s; text-align: center;
+}
+.tab.active { background: rgba(123,104,238,0.2); color: white; border-bottom: 2px solid #7b68ee; }
+.tab:hover { background: rgba(255,255,255,0.1); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
