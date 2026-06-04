@@ -5,30 +5,49 @@ BooklyTTS/
 │   │   │   └── chunks/
 │   │   │       └── .gitkeep
 │   │   ├── css/
+│   │   │   ├── reader.css
 │   │   │   └── style.css
 │   │   └── js/
-│   │       └── app.js
+│   │       ├── app.js
+│   │       └── reader.js
 │   ├── templates/
-│   │   └── index.html
+│   │   ├── index.html
+│   │   └── reader.html
 │   ├── __init__.py
 │   ├── audio_builder.py
 │   ├── cli.py
+│   ├── database.py
 │   ├── epub_processor.py
+│   ├── replacer.py
 │   ├── routes.py
-│   └── tts_engine.py
+│   ├── stream_api.py
+│   ├── tts_engine.py
+│   └── tts_engines.py
 ├── library/
 │   └── .gitkeep
 ├── output/
 │   └── .gitkeep
 ├── reference_audio/
+├── replacements/
+│   ├── _global.json
+│   └── Black_Company.json
 ├── scripts/
 ├── tests/
 ├── uploads/
-│   └── .gitkeep
+│   ├── .gitkeep
+│   ├── 50a0690f7e4b4ab59a528a51af4d1c8f_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 5712797074ad475c8114c4010b10ce3d_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 66464c9b6add4164bafea010e941b127_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── aab864dcdb094f3db1f543c119302453_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── e83bee54ad1e4c008733a5e0032cd95f_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── f757958fe8414241925cc12da679c565_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   └── ff61dab7bae44661891791bf91e1cf76_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 ├── .env
 ├── .gitignore
 ├── bookly_tts_01_init.sh
 ├── bookly_tts_03_app.sh
+├── BooklyTTS_04_06_2026.zip
+├── file_tree.txt
 ├── LICENSE
 ├── README.md
 ├── run_cli.sh
@@ -36,7 +55,10 @@ BooklyTTS/
 ├── snapshot.py
 ├── sync_bidirectional.py
 ├── sync_control.sh
+├── sync_mirror.sh
 ├── test.mp3
 ├── test.txt
+├── test_acode.js
 ├── test_sync.txt
+├── test_termux.py
 └── zipuj.py
