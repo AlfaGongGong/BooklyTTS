@@ -25,3 +25,4 @@ app/static/audio/chunks/*
 *.log
 ebook2audiobook/
 epub2tts/
+.env.names
