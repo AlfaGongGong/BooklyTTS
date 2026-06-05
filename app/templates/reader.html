@@ -1,155 +1,303 @@
 <!DOCTYPE html>
 <html lang="hr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BooklyTTS Reader</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=10">
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0d1117;color:#e6edf3;height:100vh;display:flex;flex-direction:column}
         .header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#161b22;border-bottom:1px solid #21262d;min-height:48px;z-index:100}
         .header a,.header button{color:#8b949e;text-decoration:none;background:none;border:none;cursor:pointer;font-size:1.1em;padding:4px 8px}
-        .header a:hover,.header button:hover{color:white}
-        .logo{color:#7b68ee!important;font-weight:bold;font-size:1em!important}
-        
-        .upload-row{display:flex;gap:8px;padding:8px 16px;background:#0d1117;border-bottom:1px solid #21262d;align-items:center}
-        .upload-row input[type=file]{flex:1;padding:6px 10px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#c9d1d9;font-size:0.85em}
-        .upload-row button{padding:6px 14px;background:#238636;color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.85em;white-space:nowrap}
-        .upload-row button:hover{background:#2ea043}
-        .upload-status{font-size:0.8em;color:#8b949e}
-        
+        .logo{color:#7b68ee!important;font-weight:bold}
+        .upload-row{display:flex;gap:8px;padding:6px 16px;background:#0d1117;border-bottom:1px solid #21262d;align-items:center}
+        .upload-row input[type=file]{flex:1;padding:5px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:#c9d1d9;font-size:0.8em}
+        .btn{padding:6px 14px;border:none;border-radius:4px;cursor:pointer;font-size:0.85em}
+        .btn-primary{background:#238636;color:white}
+        .btn-sm{padding:4px 10px;font-size:0.8em;background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;cursor:pointer}
+        .btn-danger{background:#da3633;color:white;border:none}
         .main{display:flex;flex:1;overflow:hidden}
-        
-        .sidebar{width:260px;background:#0d1117;border-right:1px solid #21262d;display:flex;flex-direction:column;overflow:hidden}
-        .sidebar-header{padding:12px;border-bottom:1px solid #21262d}
-        .sidebar-header h3{font-size:0.85em;color:#7b68ee;margin-bottom:8px}
-        .sidebar-header input{width:100%;padding:6px 10px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:white;font-size:0.85em}
+        .sidebar{width:260px;background:#0d1117;border-right:1px solid #21262d;display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+        .sidebar-header{padding:10px;border-bottom:1px solid #21262d}
+        .sidebar-header h3{font-size:0.8em;color:#7b68ee;margin-bottom:6px}
+        .sidebar-header input{width:100%;padding:5px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:white;font-size:0.8em}
         .chapter-list{flex:1;overflow-y:auto}
-        .chapter-item{padding:8px 12px;cursor:pointer;font-size:0.85em;color:#8b949e;border-left:3px solid transparent;transition:all 0.15s}
+        .chapter-item{padding:6px 10px;cursor:pointer;font-size:0.8em;color:#8b949e;border-left:3px solid transparent}
         .chapter-item:hover{background:rgba(255,255,255,0.03);color:white}
         .chapter-item.active{border-left-color:#7b68ee;color:white;background:rgba(123,104,238,0.1)}
-        
-        .reader{flex:1;display:flex;flex-direction:column;overflow:hidden}
-        .reader-toolbar{display:flex;gap:8px;align-items:center;padding:6px 16px;background:#161b22;border-bottom:1px solid #21262d}
-        .reader-toolbar button,.reader-toolbar select{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.8em}
-        .reader-content{flex:1;overflow-y:auto;padding:24px 32px;font-size:16px;line-height:1.8}
+        .reader{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+        .reader-toolbar{display:flex;gap:8px;align-items:center;padding:4px 16px;background:#161b22;border-bottom:1px solid #21262d;flex-shrink:0}
+        .reader-toolbar button,.reader-toolbar select{background:#21262d;border:1px solid #30363d;color:#c9d1d9;padding:4px 8px;border-radius:4px;cursor:pointer;font-size:0.75em}
+        .reader-content{flex:1;overflow-y:auto;padding:20px 28px;font-size:16px;line-height:1.8}
         .reader-content h2{color:#7b68ee;margin:16px 0 8px}
         .reader-content p{margin:8px 0}
         .welcome{text-align:center;padding:60px 20px}
-        .welcome h2{margin-bottom:12px}
-        .progress-text{margin-left:auto;font-size:0.8em;color:#555}
-        
-        .tts-bar{position:fixed;bottom:0;left:0;right:0;background:#161b22;border-top:2px solid #7b68ee;z-index:200;padding:10px 16px;box-shadow:0 -4px 20px rgba(0,0,0,0.6)}
-        .tts-bar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-        .tts-bar-header span{font-weight:bold;color:#7b68ee;font-size:0.9em}
-        .tts-bar-close{background:none;border:none;color:#f85149;cursor:pointer;font-size:1em;padding:2px 8px}
-        .tts-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
-        .tts-controls select{padding:5px 8px;background:#21262d;color:white;border:1px solid #30363d;border-radius:4px;font-size:0.8em}
-        .tts-controls input[type=range]{width:60px}
-        .tts-controls span{font-size:0.75em;color:#8b949e;white-space:nowrap}
-        .tts-actions{display:flex;gap:4px;flex-wrap:wrap}
-        .tts-actions button{padding:5px 12px;border-radius:4px;border:none;cursor:pointer;font-size:0.8em}
-        .btn-play{background:#238636;color:white}
-        .btn-pause{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
-        .btn-stop{background:#da3633;color:white}
-        .btn-nav{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
-        .tts-status-text{font-size:0.75em;color:#8b949e;margin-top:4px}
-        
-        .search-box{margin-top:8px;display:flex;gap:4px}
-        .search-box input{flex:1;padding:4px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:white;font-size:0.8em}
-        .search-box button{padding:4px 10px;background:#21262d;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;cursor:pointer;font-size:0.8em}
-        .search-result{font-size:0.75em;color:#8b949e;margin-top:2px}
-        
-        @media(max-width:600px){
-            .sidebar{display:none}
-            .reader-content{padding:16px}
-        }
+        .tts-bar{position:fixed;bottom:0;left:0;right:0;background:#161b22;border-top:2px solid #7b68ee;z-index:200;padding:8px 16px;box-shadow:0 -4px 20px rgba(0,0,0,0.6);display:none}
+        .tts-bar-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+        .tts-bar-close{background:none;border:none;color:#f85149;cursor:pointer;font-size:0.9em}
+        .tts-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+        .tts-row select{padding:4px 8px;background:#21262d;color:white;border:1px solid #30363d;border-radius:4px;font-size:0.8em}
+        .tts-row input[type=range]{width:50px}
+        .tts-actions{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+        .tts-info{display:flex;gap:16px;font-size:0.7em;color:#8b949e;flex-wrap:wrap}
+        .search-row{display:flex;gap:4px;align-items:center}
+        .search-row input{flex:1;padding:4px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:white;font-size:0.8em}
+        .sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150}
+        @media(max-width:768px){.sidebar{position:fixed;top:48px;left:0;bottom:0;z-index:160;display:none}.sidebar.open{display:flex}.sidebar-overlay.active{display:block}.reader-content{padding:12px}}
     </style>
 </head>
 <body>
-    <div class="header">
-        <div><a href="/" class="logo">📚 BooklyTTS</a></div>
-        <div id="book-title" style="font-size:0.9em;color:#8b949e;">Reader</div>
-        <div>
-            <a href="/rules" title="Pravila izgovora">🔧</a>
-            <a href="/convert" title="Konverter">💾</a>
-            <button onclick="toggleTTS()" title="TTS Kontrola">🎧</button>
-        </div>
+<div class="header">
+    <div><a href="/" class="logo">📚 BooklyTTS</a></div>
+    <div id="book-title" style="font-size:0.85em;color:#8b949e;">Reader</div>
+    <div>
+        <button onclick="resetAll()" title="Reset" style="color:#f85149;">🔄</button>
+        <a href="/rules" title="Pravila">🔧</a>
+        <a href="/convert" title="Konverter">💾</a>
+        <button onclick="toggleTTS()" title="TTS">🎧</button>
+        <button onclick="toggleSidebar()" style="display:none" id="sidebar-toggle-btn">📑</button>
     </div>
-    
-    <div class="upload-row">
-        <input type="file" id="epub-file" accept=".epub">
-        <button onclick="document.getElementById('epub-file').click()">📤 Upload EPUB</button>
-        <span class="upload-status" id="upload-status"></span>
+</div>
+
+<div class="upload-row">
+    <input type="file" id="epub-file" accept=".epub">
+    <button class="btn btn-primary" onclick="document.getElementById('epub-file').click()">📤 Upload</button>
+    <span id="upload-status" style="font-size:0.75em;color:#8b949e;"></span>
+</div>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<div class="main">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>📑 Poglavlja</h3>
+            <button onclick="closeSidebar()" style="display:none;float:right;background:none;border:none;color:#f85149;cursor:pointer;font-size:1em" class="sidebar-close-btn">✕</button>
+            <input type="text" id="chapter-search" placeholder="🔍 Filtriraj..." oninput="filterChapters()">
+        </div>
+        <div class="chapter-list" id="chapter-list"><div class="chapter-item" style="color:#555;">Uploaduj EPUB</div></div>
     </div>
-    
-    <div class="main">
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h3>📑 Poglavlja</h3>
-                <input type="text" id="chapter-search" placeholder="🔍 Filtriraj..." oninput="filterChapters()">
-            </div>
-            <div class="chapter-list" id="chapter-list">
-                <div class="chapter-item" style="color:#555;">Uploaduj EPUB</div>
-            </div>
-        </div>
-        
-        <div class="reader">
-            <div class="reader-toolbar">
-                <button onclick="toggleSidebar()">📑</button>
-                <select id="font-size" onchange="changeFontSize(this.value)">
-                    <option value="14">14px</option><option value="16" selected>16px</option>
-                    <option value="18">18px</option><option value="20">20px</option><option value="24">24px</option>
-                </select>
-                <button onclick="toggleTheme()">🌓</button>
-                <span class="progress-text" id="progress-text">-</span>
-            </div>
-            <div class="reader-content" id="reader-content">
-                <div class="welcome">
-                    <h2>📚 BooklyTTS Reader</h2>
-                    <p>Uploaduj EPUB fajl za početak čitanja</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- TTS BAR -->
-    <div class="tts-bar" id="tts-bar" style="display:none;">
-        <div class="tts-bar-header">
-            <span>🎧 TTS Kontrola</span>
-            <button class="tts-bar-close" onclick="toggleTTS()">✕ Zatvori</button>
-        </div>
-        
-        <!-- Pretraga rečenice -->
-        <div class="search-box">
-            <input type="text" id="sentence-search" placeholder="🔍 Unesi rečenicu za traženje...">
-            <button onclick="searchSentence()">Traži</button>
-            <span class="search-result" id="search-result"></span>
-        </div>
-        
-        <div class="tts-controls">
-            <select id="tts-voice">
-                <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (HR ž)</option>
-                <option value="hr-HR-SreckoNeural">Srecko (HR m)</option>
-                <option value="bs-BA-VesnaNeural">Vesna (BS ž)</option>
-                <option value="bs-BA-GoranNeural">Goran (BS m)</option>
+    <div class="reader">
+        <div class="reader-toolbar">
+            <button onclick="toggleSidebar()">📑</button>
+            <select id="font-size" onchange="changeFontSize(this.value)">
+                <option value="14">14px</option><option value="16" selected>16px</option>
+                <option value="18">18px</option><option value="20">20px</option><option value="24">24px</option>
             </select>
-            <span>⚡ <span id="rate-val">1.0x</span></span>
-            <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)">
+            <button onclick="toggleTheme()">🌓</button>
+            <button onclick="prevPage()">▲</button>
+            <button onclick="nextPage()">▼</button>
+            <span id="page-info" style="font-size:0.75em;color:#555;"></span>
+            <span id="progress-text" style="margin-left:auto;font-size:0.75em;color:#555;">-</span>
         </div>
-        
-        <div class="tts-actions">
-            <button class="btn-play" id="btn-play" onclick="ttsPlay()">▶️ Play</button>
-            <button class="btn-pause" id="btn-pause" onclick="ttsPause()" style="display:none;">⏸️ Pauza</button>
-            <button class="btn-stop" id="btn-stop" onclick="ttsStop()" style="display:none;">⏹️ Stop</button>
-            <button class="btn-nav" onclick="ttsPrev()">⏮️</button>
-            <button class="btn-nav" onclick="ttsNext()">⏭️</button>
+        <div class="reader-content" id="reader-content">
+            <div class="welcome"><h2>📚 BooklyTTS Reader</h2><p>Uploaduj EPUB za početak</p></div>
         </div>
-        
-        <div class="tts-status-text" id="tts-status">Spreman. Klikni Play za početak.</div>
     </div>
-    
-    <script src="/static/js/reader.js?v=5"></script>
+</div>
+
+<div class="tts-bar" id="tts-bar">
+    <div class="tts-bar-header">
+        <span style="font-weight:bold;color:#7b68ee;font-size:0.85em;">🎧 TTS Kontrola</span>
+        <button class="tts-bar-close" onclick="toggleTTS()">✕ Zatvori</button>
+    </div>
+    <div class="search-row">
+        <input type="text" id="sentence-search" placeholder="🔍 Rečenica...">
+        <button class="btn-sm" onclick="searchSentence()">Traži</button>
+        <span id="search-result" style="font-size:0.7em;color:#8b949e;"></span>
+    </div>
+    <div class="tts-row">
+        <select id="tts-voice">
+            <option value="hr-HR-GabrijelaNeural" selected>Gabrijela</option>
+            <option value="hr-HR-SreckoNeural">Srecko</option>
+            <option value="bs-BA-VesnaNeural">Vesna</option>
+            <option value="bs-BA-GoranNeural">Goran</option>
+        </select>
+        <span>⚡ <span id="rate-val">1.0x</span></span>
+        <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)">
+    </div>
+    <div class="tts-actions">
+        <button class="btn btn-primary" id="btn-play" onclick="ttsPlay()">▶️ Play</button>
+        <button class="btn-sm" id="btn-pause" onclick="ttsPause()" style="display:none;">⏸️</button>
+        <button class="btn-sm btn-danger" id="btn-stop" onclick="ttsStop()" style="display:none;">⏹️ Stop</button>
+        <button class="btn-sm" id="btn-restart" onclick="ttsRestart()" style="display:none;">↩️ Početak</button>
+        <button class="btn-sm" onclick="ttsPrev()">⏮️</button>
+        <button class="btn-sm" onclick="ttsNext()">⏭️</button>
+    </div>
+    <div class="tts-info">
+        <span id="info-chapter">Pogl: -</span>
+        <span id="info-chunk">Chunk: -</span>
+        <span id="info-time">0:00</span>
+    </div>
+</div>
+
+<script>
+// ========== VARIJABLE ==========
+let allChapters=[],currentIdx=0,epubFile=null,ttsJob=null,stopFlag=false,rate=1.0,paused=false,audio=null;
+let timeStart=0,timeInterval=null,preloadQueue=[];
+const isMobile=window.innerWidth<768;
+if(isMobile){document.getElementById('sidebar-toggle-btn').style.display='inline-block';document.querySelectorAll('.sidebar-close-btn').forEach(b=>b.style.display='inline-block')}
+
+// ========== STATE PERZISTENCIJA ==========
+function saveState(){
+    const state={
+        chapter:currentIdx,
+        fontSize:document.getElementById('font-size').value,
+        theme:document.body.style.background==='#fff'?'light':'dark',
+        rate:rate,
+        voice:document.getElementById('tts-voice').value
+    };
+    localStorage.setItem('booklytts_state',JSON.stringify(state));
+}
+function restoreState(){
+    try{
+        const s=JSON.parse(localStorage.getItem('booklytts_state'));
+        if(s){
+            if(s.fontSize){document.getElementById('font-size').value=s.fontSize;document.getElementById('reader-content').style.fontSize=s.fontSize+'px'}
+            if(s.theme==='light'){document.body.style.background='#fff';document.body.style.color='#24292f'}
+            if(s.rate){rate=s.rate;document.getElementById('rate-val').textContent=s.rate+'x';document.getElementById('rate-slider').value=s.rate}
+            if(s.voice)document.getElementById('tts-voice').value=s.voice;
+        }
+    }catch(e){}
+}
+function resetAll(){
+    if(confirm('Resetovati sve? Ovo će obrisati uploadovanu knjigu i sva podešavanja.')){
+        localStorage.removeItem('booklytts_state');
+        location.reload();
+    }
+}
+setInterval(saveState,5000);
+
+// ========== UPLOAD ==========
+document.getElementById('epub-file').addEventListener('change',async function(){
+    const f=this.files[0];if(!f)return;
+    document.getElementById('upload-status').textContent='⏳...';
+    const fd=new FormData();fd.append('epub_file',f);
+    try{
+        const r=await fetch('/upload-epub',{method:'POST',body:fd});const d=await r.json();
+        if(d.success){
+            epubFile=d.filename;allChapters=d.chapters;
+            document.getElementById('book-title').textContent=d.metadata.title;
+            document.getElementById('upload-status').textContent='✅ '+d.chapter_count+' pogl.';
+            document.querySelector('.welcome').style.display='none';
+            renderChapters();
+            const savedChapter=JSON.parse(localStorage.getItem('booklytts_state')||'{}').chapter||0;
+            loadChapter(savedChapter);
+            saveState();
+        }else{document.getElementById('upload-status').textContent='❌ '+d.error}
+    }catch(e){document.getElementById('upload-status').textContent='❌ Greška'}
+});
+
+// ========== POGLAVLJA ==========
+function renderChapters(){
+    document.getElementById('chapter-list').innerHTML=allChapters.map((c,i)=>
+        `<div class="chapter-item${i===currentIdx?' active':''}" onclick="loadChapter(${i});if(isMobile)closeSidebar()" id="ch-${i}">${i+1}. ${c.title||'Pogl.'+(i+1)}</div>`).join('');
+}
+function filterChapters(){
+    const q=document.getElementById('chapter-search').value.toLowerCase();
+    document.querySelectorAll('.chapter-item').forEach(el=>el.style.display=el.textContent.toLowerCase().includes(q)?'':'none');
+}
+function loadChapter(i){
+    currentIdx=i;if(!allChapters[i])return;
+    const c=allChapters[i];
+    document.getElementById('reader-content').innerHTML=`<h2>${c.title||'Poglavlje '+(i+1)}</h2>`+(c.text||'').split('\n\n').filter(p=>p.trim()).map(p=>`<p>${p}</p>`).join('');
+    document.getElementById('progress-text').textContent=Math.round((i+1)/allChapters.length*100)+'%';
+    document.querySelectorAll('.chapter-item').forEach(el=>el.classList.remove('active'));
+    const a=document.getElementById('ch-'+i);if(a)a.classList.add('active');
+    saveState();
+}
+function prevPage(){document.getElementById('reader-content').scrollBy({top:-400,behavior:'smooth'})}
+function nextPage(){document.getElementById('reader-content').scrollBy({top:400,behavior:'smooth'})}
+function toggleSidebar(){const s=document.getElementById('sidebar'),o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('active')}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('active')}
+function changeFontSize(s){document.getElementById('reader-content').style.fontSize=s+'px';saveState()}
+function toggleTheme(){const b=document.body;b.style.background=b.style.background==='#fff'?'#0d1117':'#fff';b.style.color=b.style.color==='#24292f'?'#e6edf3':'#24292f';saveState()}
+function updateRate(v){rate=parseFloat(v);document.getElementById('rate-val').textContent=v+'x';if(audio)audio.playbackRate=rate;saveState()}
+function toggleTTS(){const b=document.getElementById('tts-bar');b.style.display=b.style.display==='block'?'none':'block'}
+
+// ========== PRETRAGA ==========
+async function searchSentence(){
+    const q=document.getElementById('sentence-search').value.trim();if(!q)return;
+    document.getElementById('search-result').textContent='🔍...';
+    try{
+        const r=await fetch('/find-sentence',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sentence:q,epub_filename:epubFile})});
+        const d=await r.json();
+        document.getElementById('search-result').textContent=d.found?'✅ Pogl.'+(d.chapter_idx+1):'❌ Nije pronađeno';
+        if(d.found)loadChapter(d.chapter_idx);
+    }catch(e){document.getElementById('search-result').textContent='❌ Greška'}
+}
+
+// ========== TTS ==========
+function startTimer(){timeStart=Date.now();timeInterval=setInterval(()=>{const e=Math.floor((Date.now()-timeStart)/1000);document.getElementById('info-time').textContent=`${Math.floor(e/60)}:${String(e%60).padStart(2,'0')}`},1000)}
+function stopTimer(){if(timeInterval){clearInterval(timeInterval);timeInterval=null}}
+
+async function ttsPlay(){
+    if(!allChapters.length){alert('Uploaduj EPUB!');return}
+    stopFlag=false;paused=false;preloadQueue=[];
+    document.getElementById('btn-play').style.display='none';
+    document.getElementById('btn-pause').style.display='inline-block';
+    document.getElementById('btn-stop').style.display='inline-block';
+    document.getElementById('btn-restart').style.display='inline-block';
+    document.getElementById('btn-pause').textContent='⏸️';
+    document.getElementById('info-chapter').textContent='Pogl: '+(currentIdx+1)+'/'+allChapters.length;
+    startTimer();
+    saveState();
+    try{
+        const r=await fetch('/stream-start',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chapter:currentIdx,voice:document.getElementById('tts-voice').value,epub_filename:epubFile})});
+        const d=await r.json();
+        if(d.job_id){ttsJob=d.job_id;preloadAndPlay()}
+        else{resetBtns();stopTimer()}
+    }catch(e){resetBtns();stopTimer()}
+}
+
+async function preloadAndPlay(){
+    if(stopFlag||!ttsJob)return;
+    for(let i=0;i<3;i++){if(stopFlag)return;
+        try{
+            const r=await fetch('/stream-next/'+ttsJob);const ct=r.headers.get('content-type')||'';
+            if(ct.includes('audio')){
+                const blob=await r.blob();
+                preloadQueue.push({url:URL.createObjectURL(blob),ch:parseInt(r.headers.get('X-Ch')||currentIdx),ck:parseInt(r.headers.get('X-Ck')||0)+1,ckTot:parseInt(r.headers.get('X-CkTot')||1),chTot:parseInt(r.headers.get('X-ChTot')||allChapters.length)});
+            }else{const d=await r.json();if(d.finished){preloadQueue.push({done:true});break}}
+        }catch(e){break}
+    }
+    if(preloadQueue.length>0)playFromQueue(0);
+}
+function playFromQueue(idx){
+    if(stopFlag||idx>=preloadQueue.length)return;
+    const item=preloadQueue[idx];
+    if(item.done){resetBtns();stopTimer();if(currentIdx<allChapters.length-1)setTimeout(()=>{ttsStop();loadChapter(currentIdx+1);setTimeout(ttsPlay,500)},2000);return}
+    if(audio){audio.pause();audio.src='';audio.load();audio=null}
+    audio=new Audio(item.url);audio.playbackRate=rate;audio.play();
+    document.getElementById('info-chapter').textContent=`Pogl: ${item.ch+1}/${item.chTot}`;
+    document.getElementById('info-chunk').textContent=`Chunk: ${item.ck}/${item.ckTot}`;
+    audio.onended=()=>{if(!stopFlag&&!paused){if(idx===preloadQueue.length-2)loadMoreChunks();playFromQueue(idx+1)}};
+    if(idx===0)setTimeout(loadMoreChunks,1000);
+}
+async function loadMoreChunks(){
+    if(stopFlag||!ttsJob)return;
+    for(let i=0;i<2;i++){if(stopFlag)return;
+        try{
+            const r=await fetch('/stream-next/'+ttsJob);const ct=r.headers.get('content-type')||'';
+            if(ct.includes('audio')){const blob=await r.blob();preloadQueue.push({url:URL.createObjectURL(blob),ch:parseInt(r.headers.get('X-Ch')||currentIdx),ck:parseInt(r.headers.get('X-Ck')||0)+1,ckTot:parseInt(r.headers.get('X-CkTot')||1),chTot:parseInt(r.headers.get('X-ChTot')||allChapters.length)})}
+            else{const d=await r.json();if(d.finished){preloadQueue.push({done:true});return}}
+        }catch(e){return}
+    }
+}
+function ttsPause(){if(!audio)return;if(paused){audio.play();paused=false;document.getElementById('btn-pause').textContent='⏸️';startTimer()}else{audio.pause();paused=true;document.getElementById('btn-pause').textContent='▶️';stopTimer()}}
+function ttsStop(){stopFlag=true;ttsJob=null;if(audio){audio.pause();audio.src='';audio.load();audio=null}preloadQueue.forEach(p=>{if(p.url)URL.revokeObjectURL(p.url)});preloadQueue=[];resetBtns();stopTimer()}
+function ttsRestart(){ttsStop();setTimeout(ttsPlay,300)}
+function ttsNext(){if(currentIdx<allChapters.length-1){ttsStop();loadChapter(currentIdx+1);setTimeout(ttsPlay,300)}}
+function ttsPrev(){if(currentIdx>0){ttsStop();loadChapter(currentIdx-1);setTimeout(ttsPlay,300)}}
+function resetBtns(){document.getElementById('btn-play').style.display='inline-block';document.getElementById('btn-pause').style.display='none';document.getElementById('btn-stop').style.display='none';document.getElementById('btn-restart').style.display='none'}
+
+// ========== KEYBOARD ==========
+document.addEventListener('keydown',function(e){
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+    if(e.key==='ArrowRight')ttsNext();if(e.key==='ArrowLeft')ttsPrev();
+    if(e.key===' '){e.preventDefault();if(ttsJob&&!stopFlag)ttsPause();else ttsPlay()}
+});
+
+// ========== INIT ==========
+restoreState();
+</script>
 </body>
 </html>

@@ -12,7 +12,8 @@ BooklyTTS/
 │   │       └── reader.js
 │   ├── templates/
 │   │   ├── index.html
-│   │   └── reader.html
+│   │   ├── reader.html
+│   │   └── rules.html
 │   ├── __init__.py
 │   ├── audio_builder.py
 │   ├── cli.py
@@ -35,15 +36,28 @@ BooklyTTS/
 ├── tests/
 ├── uploads/
 │   ├── .gitkeep
+│   ├── 0ae0027d91754ff2bf464beba0ac2f73_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 0f28438f02d04a1b91343c9aa0caadf3_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 181bcfcd4621492f86ceb02e38f85c80_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 29632ef6ea1c4376aede9b4379fa7bac_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 40da10173ff946ca895a368511451a13_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   ├── 50a0690f7e4b4ab59a528a51af4d1c8f_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   ├── 5712797074ad475c8114c4010b10ce3d_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── 5ed0fcd6611040a99226ecb64e2226b5_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   ├── 66464c9b6add4164bafea010e941b127_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   ├── aab864dcdb094f3db1f543c119302453_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── bb537fe7bee44dcb9c77f13638ce1b15_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── c583ad83c7ce4c008946cf95b6ae3196_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   ├── e83bee54ad1e4c008733a5e0032cd95f_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── edfe09ff554c45cc8091cd0640d372b0_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── f02f9f1d785c48fea648ea296ecf6b67_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   ├── f757958fe8414241925cc12da679c565_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
+│   ├── f80d795f3b7a4653aa10d4b6a06b280c_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 │   └── ff61dab7bae44661891791bf91e1cf76_PREVEDENO_Chronicles_of_the_Black_Company_-_Glen_Cook.epub
 ├── .env
 ├── .gitignore
+├── AUDIT_AFTER_FIX.md
+├── AUDIT_REPORT.md
 ├── bookly_tts_01_init.sh
 ├── bookly_tts_03_app.sh
 ├── BooklyTTS_04_06_2026.zip

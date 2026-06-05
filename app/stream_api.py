@@ -3,7 +3,6 @@ import tempfile
 import queue
 import threading
 import uuid
-import time
 from flask import Blueprint, request, jsonify, send_file, after_this_request
 from app.tts_engine import TTSEngine
 from app.epub_processor import EPUBProcessor
@@ -21,6 +20,14 @@ def find_epub(filename=None):
         if f.endswith('.epub') and f != '.gitkeep':
             return f'uploads/{f}'
     return None
+
+
+def clean_header(val):
+    """Ukloni SVE problematicne karaktere iz headera"""
+    if not val:
+        return ''
+    return str(val).replace('\n', ' ').replace('\r', '').encode(
+        'ascii', 'ignore').decode('ascii')[:200]
 
 
 @stream_bp.route('/stream-start', methods=['POST'])
@@ -49,9 +56,17 @@ def stream_start():
                 chunk = text[j:j + 2000]
                 if len(chunk.strip()) < 50:
                     continue
-                tmp = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
+                tmp = tempfile.NamedTemporaryFile(
+                    suffix='.mp3', delete=False)
                 tts.synthesize(chunk, tmp.name, voice)
-                q.put({'file': tmp.name, 'title': chapters[i]['title']})
+                q.put({
+                    'file': tmp.name,
+                    'chapter_idx': i,
+                    'chunk_idx': j // 2000,
+                    'total_chunks': max(1, len(text) // 2000 + 1),
+                    'total_chapters': len(chapters),
+                    'text_snippet': chunk[:300]
+                })
         q.put({'done': True})
 
     threading.Thread(target=buf, daemon=True).start()
@@ -80,7 +95,13 @@ def stream_next(job_id):
             pass
         return response
 
-    return send_file(file_path, mimetype='audio/mpeg')
+    resp = send_file(file_path, mimetype='audio/mpeg')
+    # SAMO numericki headeri - bez teksta
+    resp.headers['X-Ch-Idx'] = str(chunk.get('chapter_idx', 0))
+    resp.headers['X-Ck-Idx'] = str(chunk.get('chunk_idx', 0))
+    resp.headers['X-Ck-Total'] = str(chunk.get('total_chunks', 1))
+    resp.headers['X-Ch-Total'] = str(chunk.get('total_chapters', 1))
+    return resp
 
 
 @stream_bp.route('/stream-from-text', methods=['POST'])
@@ -97,13 +118,19 @@ def stream_from_text():
 
     def buf():
         tts = TTSEngine()
+        total = max(1, len(text) // 2000 + 1)
         for j in range(0, len(text), 2000):
             chunk = text[j:j + 2000]
             if len(chunk.strip()) < 50:
                 continue
             tmp = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
             tts.synthesize(chunk, tmp.name, voice)
-            q.put({'file': tmp.name, 'title': 'Stream'})
+            q.put({
+                'file': tmp.name,
+                'chunk_idx': j // 2000,
+                'total_chunks': total,
+                'total_chapters': 1,
+            })
         q.put({'done': True})
 
     threading.Thread(target=buf, daemon=True).start()
@@ -116,13 +143,11 @@ def get_chapters():
     if not epub_path:
         return jsonify({'chapters': []})
     chapters = EPUBProcessor().extract_chapters(epub_path)
-    return jsonify({
-        'chapters': [
-            {'id': c['id'], 'title': c['title'],
-             'char_count': c['char_count'], 'text': c['text']}
-            for c in chapters
-        ]
-    })
+    return jsonify({'chapters': [
+        {'id': c['id'], 'title': c['title'],
+         'char_count': c['char_count'], 'text': c['text']}
+        for c in chapters
+    ]})
 
 
 @stream_bp.route('/find-sentence', methods=['POST'])
@@ -151,17 +176,3 @@ def find_sentence():
                 'total_chapters': len(chapters)
             })
     return jsonify({'found': False})
-
-
-def cleanup_old_sessions():
-    while True:
-        time.sleep(300)
-        for job_id in list(stream_buffers.keys()):
-            try:
-                if stream_buffers[job_id].qsize() == 0:
-                    del stream_buffers[job_id]
-            except Exception:
-                pass
-
-
-threading.Thread(target=cleanup_old_sessions, daemon=True).start()
