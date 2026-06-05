@@ -2,19 +2,18 @@ import zipfile
 import os
 import re
 import logging
+import functools
 from bs4 import BeautifulSoup
 
-import functools
-
-
-@functools.lru_cache(maxsize=16)
-def _epub_cache(epub_path: str, mtime: float):
-    """Modul-razinski cache – ne vezuje se za instancu."""
-    return EPUBProcessor()._extract_chapters(epub_path)
-
-
-
 logging.basicConfig(level=logging.WARNING)
+
+
+# ARCH-02: lru_cache na modul-level funkciji — radi ispravno bez obzira
+# na to koliko EPUBProcessor instanci postoji. Ključ = (epub_path, mtime).
+@functools.lru_cache(maxsize=10)
+def _cached_extract(epub_path: str, mtime: float):
+    """Parsira EPUB jednom po (path, mtime) paru. Thread-safe jer je GIL drži."""
+    return EPUBProcessor()._extract_chapters(epub_path)
 
 
 class EPUBProcessor:
@@ -45,11 +44,12 @@ class EPUBProcessor:
             return {'title': 'Greska', 'author': 'Greska', 'language': 'hr'}
 
     def extract_chapters(self, epub_path):
-        mtime = os.path.getmtime(epub_path) if os.path.exists(epub_path) else 0
-        return _epub_cache(epub_path, mtime)
-
+        """Javni entrypoint — delegira na modul-level cache."""
+        mtime = os.path.getmtime(epub_path) if os.path.exists(epub_path) else 0.0
+        return _cached_extract(epub_path, mtime)
 
     def _extract_chapters(self, epub_path):
+        """Stvarni parser — poziva se samo pri cache miss."""
         chapters = []
         try:
             with zipfile.ZipFile(epub_path, 'r') as zf:

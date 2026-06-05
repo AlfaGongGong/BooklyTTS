@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BooklyTTS</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=8">
+</head>
+<body>
+    <div class="container" style="text-align:center;padding-top:60px;">
+        <h1>📚 BooklyTTS</h1>
+        <p class="subtitle">EPUB u prirodni govor</p>
+        
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:40px 0;">
+            <a href="/reader" class="feature-card">
+                <span style="font-size:3em;">📖</span>
+                <h3>Reader</h3>
+                <p>Čitaj i slušaj knjige sa TTS-om</p>
+            </a>
+            
+            <a href="/convert" class="feature-card">
+                <span style="font-size:3em;">💾</span>
+                <h3>Konverter</h3>
+                <p>Snimi MP3 audiobook</p>
+            </a>
+            
+            <a href="/rules" class="feature-card">
+                <span style="font-size:3em;">🔧</span>
+                <h3>Pravila</h3>
+                <p>Podesi izgovor imena</p>
+            </a>
+        </div>
+        
+        <footer style="margin-top:60px;">
+            <p>BooklyTTS · edge-tts · HR/BS/SR · <a href="https://github.com/AlfaGongGong/BooklyTTS">GitHub</a></p>
+        </footer>
+    </div>
+    
+    <style>
+        .feature-card {
+            display: block; width: 220px; padding: 30px 20px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; text-decoration: none; color: white;
+            transition: all 0.3s;
+        }
+        .feature-card:hover { background: rgba(123,104,238,0.15); transform: translateY(-4px); }
+        .feature-card h3 { margin: 12px 0 8px; color: #7b68ee; }
+        .feature-card p { font-size: 0.85em; color: #aaa; }
+    </style>
+</body>
+</html>

@@ -49,17 +49,3 @@ footer a { color: #7b68ee; }
 .tab:hover { background: rgba(255,255,255,0.1); }
 .tab-content { display: none; }
 .tab-content.active { display: block; }
-
-/* UX-08: floating toast notifikacija */
-#upload-toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    min-width: 220px;
-    max-width: 90vw;
-    text-align: center;
-    pointer-events: none;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>TEST</title></head>
+<body>
+    <button onclick="test()">TEST - Učitaj prvi chapter</button>
+    <div id="out"></div>
+    <script>
+    async function test(){
+        document.getElementById('out').textContent='Učitavam...';
+        const r=await fetch('/get-chapters');
+        const d=await r.json();
+        const c=d.chapters[0];
+        document.getElementById('out').innerHTML=
+            '<h2>'+c.title+'</h2>'+
+            '<p>'+c.text.substring(0,2000)+'</p>';
+    }
+    </script>
+</body>
+</html>

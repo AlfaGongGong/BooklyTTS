@@ -12,6 +12,7 @@ def create_app():
     for folder in ['uploads', 'output']:
         os.makedirs(folder, exist_ok=True)
 
+    # ARCH-06: init_db() jednom pri startu, ne unutar svake DB funkcije
     from app.database import init_db
     init_db()
 

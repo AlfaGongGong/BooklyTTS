@@ -96,11 +96,12 @@ def stream_next(job_id):
         return response
 
     resp = send_file(file_path, mimetype='audio/mpeg')
-    # SAMO numericki headeri - bez teksta
-    resp.headers['X-Ch-Idx'] = str(chunk.get('chapter_idx', 0))
-    resp.headers['X-Ck-Idx'] = str(chunk.get('chunk_idx', 0))
-    resp.headers['X-Ck-Total'] = str(chunk.get('total_chunks', 1))
-    resp.headers['X-Ch-Total'] = str(chunk.get('total_chapters', 1))
+    # BUG-04 FIX: koristimo nazive koje reader.js stvarno čita
+    # reader.js: r.headers.get('X-Ch'), 'X-Ck', 'X-CkTot', 'X-ChTot'
+    resp.headers['X-Ch'] = str(chunk.get('chapter_idx', 0))
+    resp.headers['X-Ck'] = str(chunk.get('chunk_idx', 0))
+    resp.headers['X-CkTot'] = str(chunk.get('total_chunks', 1))
+    resp.headers['X-ChTot'] = str(chunk.get('total_chapters', 1))
     return resp
 
 
@@ -176,3 +177,4 @@ def find_sentence():
                 'total_chapters': len(chapters)
             })
     return jsonify({'found': False})
+

@@ -36,13 +36,23 @@ class TTSEngine:
             chunks.append(current.strip())
         return chunks or [text]
 
-    def synthesize(self, text, output_path, voice=None):
+    def synthesize(self, text, output_path, voice=None, epub_name=None, loop=None):
+        """
+        Sintetizira tekst u MP3 na output_path.
+
+        ARCH-05: epub_name se prosljeđuje replaceru za per-book pravila.
+        ARCH-03: prihvaća postojeći event loop (iz stream workera) da izbjegne
+                 50x kreiranje/destrukciju loopa po jobu.
+        ARCH-04: ffmpeg greška se eksplicitno detektira i baca RuntimeError.
+        """
         if voice is None:
             voice = self.voice
-        text = self.replacer.apply(text)
+
+        # ARCH-05: per-book zamjene ako je epub_name dostupan
+        text = self.replacer.apply(text, epub_name=epub_name)
         chunks = self._chunk_text(text)
 
-        async def _synth():
+        async def _synth_all():
             import edge_tts
             files = []
             for chunk in chunks:
@@ -57,27 +67,39 @@ class TTSEngine:
                 with open(concat, 'w', encoding='utf-8') as f:
                     for fp in files:
                         f.write(f"file '{os.path.abspath(fp)}'\n")
-                subprocess.run([
+
+                # ARCH-04: eksplicitna provjera ffmpeg rezultata
+                result = subprocess.run([
                     'ffmpeg', '-y', '-f', 'concat', '-safe', '0',
                     '-i', concat, '-c:a', 'copy', output_path
                 ], check=False, capture_output=True)
+
                 os.remove(concat)
                 for fp in files:
-                    os.remove(fp)
+                    try:
+                        os.remove(fp)
+                    except OSError:
+                        pass
 
-        import threading
-        _tl = getattr(threading.current_thread(), '_tts_loop', None)
-        if _tl is None or _tl.is_closed():
-            import asyncio as _aio
-            _tl = _aio.new_event_loop()
-            threading.current_thread()._tts_loop = _tl
-        _tl.run_until_complete(_synth())
+                if result.returncode != 0 or not os.path.exists(output_path):
+                    raise RuntimeError(
+                        f"ffmpeg greška (returncode={result.returncode}): "
+                        f"{result.stderr.decode(errors='replace')[:300]}"
+                    )
+
+        # ARCH-03: koristi proslijeđeni loop ako postoji, inače kreira novi
+        if loop is not None:
+            loop.run_until_complete(_synth_all())
+        else:
+            asyncio.run(_synth_all())
+
         return output_path
 
-    def stream_chapter(self, text, voice=None, max_chars=3000):
+    def stream_chapter(self, text, voice=None, epub_name=None, max_chars=3000):
         if voice is None:
             voice = self.voice
-        text = self.replacer.apply(text[:max_chars])
+        # ARCH-05: prosljeđuj epub_name i ovdje
+        text_to_synth = self.replacer.apply(text[:max_chars], epub_name=epub_name)
         tmpfile = tempfile.NamedTemporaryFile(suffix='.mp3', delete=False)
-        self.synthesize(text, tmpfile.name, voice)
+        self.synthesize(text_to_synth, tmpfile.name, voice, epub_name=epub_name)
         return tmpfile.name

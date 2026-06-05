@@ -1,9 +1,17 @@
+"""
+Baza podataka za BooklyTTS.
+
+ARCH-06: init_db() se poziva samo jednom pri startu aplikacije (iz create_app()),
+         ne unutar svake funkcije. Sve javne funkcije pretpostavljaju da je baza
+         već inicijalizirana.
+"""
 import sqlite3
 
 DB_PATH = 'booklytts.db'
 
 
 def init_db():
+    """Kreira tablice ako ne postoje. Poziva se jednom iz create_app()."""
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS conversions (
@@ -21,6 +29,7 @@ def init_db():
                 value TEXT
             )
         ''')
+        conn.commit()
 
 
 def save_conversion(epub_name, voice, chapters_count, output_file):
@@ -30,6 +39,7 @@ def save_conversion(epub_name, voice, chapters_count, output_file):
             'output_file) VALUES (?,?,?,?)',
             (epub_name, voice, chapters_count, output_file)
         )
+        conn.commit()
 
 
 def get_history(limit=20):
@@ -50,6 +60,7 @@ def save_setting(key, value):
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute('INSERT OR REPLACE INTO settings VALUES (?,?)',
                      (key, value))
+        conn.commit()
 
 
 def get_setting(key, default=None):

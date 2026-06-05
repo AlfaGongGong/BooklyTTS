@@ -41,8 +41,8 @@
         .tts-info{display:flex;gap:16px;font-size:0.7em;color:#8b949e;flex-wrap:wrap}
         .search-row{display:flex;gap:4px;align-items:center}
         .search-row input{flex:1;padding:4px 8px;background:#21262d;border:1px solid #30363d;border-radius:4px;color:white;font-size:0.8em}
-        .sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150;touch-action:none;-webkit-tap-highlight-color:transparent}
-        @media(max-width:768px){.sidebar{position:fixed;top:48px;left:0;bottom:0;z-index:160;display:none;transition:transform 0.25s ease}.sidebar.open{display:flex}.sidebar-overlay.active{display:block;pointer-events:all}.reader-content{padding:12px}}
+        .sidebar-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:150}
+        @media(max-width:768px){.sidebar{position:fixed;top:48px;left:0;bottom:0;z-index:160;display:none}.sidebar.open{display:flex}.sidebar-overlay.active{display:block}.reader-content{padding:12px}}
     </style>
 </head>
 <body>
@@ -106,18 +106,10 @@
     </div>
     <div class="tts-row">
         <select id="tts-voice">
-            <optgroup label="🇭🇷 Hrvatski">
-                <option value="hr-HR-GabrijelaNeural" selected>Gabrijela (ž)</option>
-                <option value="hr-HR-SreckoNeural">Srećko (m)</option>
-            </optgroup>
-            <optgroup label="🇧🇦 Bosanski">
-                <option value="bs-BA-VesnaNeural">Vesna (ž)</option>
-                <option value="bs-BA-GoranNeural">Goran (m)</option>
-            </optgroup>
-            <optgroup label="🇷🇸 Srpski">
-                <option value="sr-RS-SophieNeural">Sophie (ž)</option>
-                <option value="sr-RS-NicholasNeural">Nicholas (m)</option>
-            </optgroup>
+            <option value="hr-HR-GabrijelaNeural" selected>Gabrijela</option>
+            <option value="hr-HR-SreckoNeural">Srecko</option>
+            <option value="bs-BA-VesnaNeural">Vesna</option>
+            <option value="bs-BA-GoranNeural">Goran</option>
         </select>
         <span>⚡ <span id="rate-val">1.0x</span></span>
         <input type="range" id="rate-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateRate(this.value)">
@@ -212,8 +204,8 @@ function loadChapter(i){
     const a=document.getElementById('ch-'+i);if(a)a.classList.add('active');
     saveState();
 }
-function prevPage(){document.getElementById('reader-content').scrollBy({top:-(document.getElementById('reader-content').clientHeight*0.85||400),behavior:'smooth'})}
-function nextPage(){document.getElementById('reader-content').scrollBy({top:(document.getElementById('reader-content').clientHeight*0.85||400),behavior:'smooth'})}
+function prevPage(){document.getElementById('reader-content').scrollBy({top:-400,behavior:'smooth'})}
+function nextPage(){document.getElementById('reader-content').scrollBy({top:400,behavior:'smooth'})}
 function toggleSidebar(){const s=document.getElementById('sidebar'),o=document.getElementById('sidebar-overlay');s.classList.toggle('open');o.classList.toggle('active')}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebar-overlay').classList.remove('active')}
 function changeFontSize(s){document.getElementById('reader-content').style.fontSize=s+'px';saveState()}
